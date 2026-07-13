@@ -16,7 +16,10 @@ import {
   Map,
   X,
   AlertCircle,
-  LogIn
+  LogIn,
+  BookOpen,
+  Cpu,
+  Handshake
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -294,8 +297,8 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-5 hover:shadow-lg transition-all group hover:-translate-y-1">
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-primary group-hover:text-white transition-all">
-              📖
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+              <BookOpen className="w-6 h-6" />
             </div>
             <h4 className="text-xl font-bold text-on-surface">Tarbiyyah & Devotion</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
@@ -304,8 +307,8 @@ export default function LandingPage() {
           </div>
 
           <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-5 hover:shadow-lg transition-all group hover:-translate-y-1">
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-primary group-hover:text-white transition-all">
-              💻
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+              <Cpu className="w-6 h-6" />
             </div>
             <h4 className="text-xl font-bold text-on-surface">Vocations & Technology</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
@@ -314,8 +317,8 @@ export default function LandingPage() {
           </div>
 
           <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-5 hover:shadow-lg transition-all group hover:-translate-y-1">
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-primary group-hover:text-white transition-all">
-              🤝
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+              <Handshake className="w-6 h-6" />
             </div>
             <h4 className="text-xl font-bold text-on-surface">Islamic Brotherhood</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
@@ -372,7 +375,7 @@ export default function LandingPage() {
             <div className="my-auto flex flex-col items-center gap-3">
               <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center animate-ping absolute" />
               <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white relative shadow-lg">
-                📍
+                <MapPin className="w-6 h-6" />
               </div>
               <span className="text-sm font-bold text-on-surface mt-2">Al-Hikmat Nursery & Primary School Area</span>
             </div>
