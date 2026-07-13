@@ -166,15 +166,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section id="hero" className="relative py-20 px-6 md:px-10 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
-        <div className="flex flex-col items-center gap-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-semibold rounded-full">
-            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            July Session Registration is Open
-          </div>
-          <span className="text-xs font-bold text-on-surface-variant tracking-wider uppercase italic mt-1 block">
-            "La ilaha illallah Muhammadur-Rasuulul Allah"
-          </span>
-        </div>
         <h2 className="text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight max-w-4xl">
           Holiday Training Course (HTC): <br />
           <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Spiritual Renewal, Vocations & Leadership</span>
