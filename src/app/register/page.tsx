@@ -212,6 +212,7 @@ export default function RegisterPage() {
         genotype: formData.genotype,
         emergencyContactName: formData.emergencyContactName,
         emergencyContactPhone: formData.emergencyContactPhone,
+        skillOfInterest: formData.skillOfInterest,
       });
       setCurrentRef(newD.reference);
       setShowPaystackOverlay(true);
