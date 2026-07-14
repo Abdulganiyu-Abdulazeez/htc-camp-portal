@@ -190,8 +190,8 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative py-20 px-6 md:px-10 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
-        <h2 className="text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight max-w-4xl">
+      <section id="hero" className="relative py-20 px-6 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
+        <h2 className="w-full text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight">
           Holiday Training Course (HTC '26) <br />
           <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
         </h2>

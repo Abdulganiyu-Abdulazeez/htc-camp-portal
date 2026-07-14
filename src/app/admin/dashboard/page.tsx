@@ -97,6 +97,17 @@ export default function AdminDashboard() {
     autoGroupingEnabled: settings.autoGroupingEnabled,
   });
 
+  // Sync form states with context settings when they load from Supabase
+  useEffect(() => {
+    setSettingsForm({
+      campFee: settings.campFee,
+      capacityLimit: settings.capacityLimit,
+      startDate: settings.startDate,
+      endDate: settings.endDate,
+      autoGroupingEnabled: settings.autoGroupingEnabled,
+    });
+  }, [settings]);
+
   useEffect(() => {
     if (!isAdminLoggedIn) {
       router.push("/admin/login");

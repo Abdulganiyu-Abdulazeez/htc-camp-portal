@@ -27,6 +27,7 @@ create table if not exists public.delegates (
   "paymentStatus" text not null check ("paymentStatus" in ('verified', 'pending')),
   "assignedGroup" text not null default 'None',
   "assignedRoom" text not null default 'None',
+  "skillOfInterest" text not null default 'None',
   "createdAt" timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -49,7 +50,7 @@ create policy "Allow public delete of delegates" on public.delegates
 -- Create settings table
 create table if not exists public.settings (
   id integer primary key default 1 check (id = 1),
-  "campFee" numeric not null default 8500,
+  "campFee" numeric not null default 6000,
   "capacityLimit" integer not null default 500,
   "startDate" text not null default '2026-07-25',
   "endDate" text not null default '2026-07-27',
@@ -58,7 +59,7 @@ create table if not exists public.settings (
 
 -- Insert initial settings row if not exists
 insert into public.settings (id, "campFee", "capacityLimit", "startDate", "endDate", "autoGroupingEnabled")
-values (1, 8500, 500, '2026-07-25', '2026-07-27', true)
+values (1, 6000, 500, '2026-07-25', '2026-07-27', true)
 on conflict (id) do nothing;
 
 -- Enable RLS for settings
