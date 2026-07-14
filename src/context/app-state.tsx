@@ -333,6 +333,20 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Keep currentDelegate in sync with the delegates list (e.g. when payment status or room changes)
+  useEffect(() => {
+    if (currentDelegate) {
+      const fresh = delegates.find(
+        (d) =>
+          d.email.toLowerCase() === currentDelegate.email.toLowerCase() ||
+          d.reference === currentDelegate.reference
+      );
+      if (fresh && JSON.stringify(fresh) !== JSON.stringify(currentDelegate)) {
+        setCurrentDelegate(fresh);
+      }
+    }
+  }, [delegates, currentDelegate]);
+
   // Save to sessionStorage only after the client-side state has been initialized/loaded
   useEffect(() => {
     if (!isLoaded) return;
