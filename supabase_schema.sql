@@ -71,3 +71,48 @@ create policy "Allow public select of settings" on public.settings
 
 create policy "Allow public update of settings" on public.settings
   for update using (true);
+
+-- Create administrators table
+create table if not exists public.administrators (
+  id text primary key,
+  "fullName" text not null,
+  email text unique not null,
+  role text not null check (role in ('Super Admin', 'Registry')),
+  status text not null check (status in ('Active', 'Pending')),
+  "lastLogin" text,
+  "createdAt" timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS for administrators
+alter table public.administrators enable row level security;
+
+-- Create policies for administrators
+create policy "Allow public insert to administrators" on public.administrators for insert with check (true);
+create policy "Allow public select of administrators" on public.administrators for select using (true);
+create policy "Allow public update of administrators" on public.administrators for update using (true);
+create policy "Allow public delete of administrators" on public.administrators for delete using (true);
+
+-- Insert initial administrators row if not exists
+insert into public.administrators (id, "fullName", email, role, status, "lastLogin")
+values ('admin_1', 'Usman Farooq', 'admin@example.com', 'Super Admin', 'Active', '2026-07-14T03:22:28Z')
+on conflict (id) do nothing;
+
+-- Create announcements table
+create table if not exists public.announcements (
+  id text primary key,
+  title text not null,
+  category text not null check (category in ('Logistics', 'Curriculum', 'Emergency', 'Spiritual')),
+  content text not null,
+  "expiryDate" text,
+  status text not null check (status in ('Published', 'Draft')),
+  "createdAt" timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS for announcements
+alter table public.announcements enable row level security;
+
+-- Create policies for announcements
+create policy "Allow public insert to announcements" on public.announcements for insert with check (true);
+create policy "Allow public select of announcements" on public.announcements for select using (true);
+create policy "Allow public update of announcements" on public.announcements for update using (true);
+create policy "Allow public delete of announcements" on public.announcements for delete using (true);

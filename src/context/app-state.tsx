@@ -43,11 +43,34 @@ export interface CampSettings {
   autoGroupingEnabled: boolean;
 }
 
+export interface Administrator {
+  id: string;
+  fullName: string;
+  email: string;
+  role: "Super Admin" | "Registry";
+  status: "Active" | "Pending";
+  lastLogin?: string;
+  createdAt: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  category: "Logistics" | "Curriculum" | "Emergency" | "Spiritual";
+  content: string;
+  expiryDate?: string;
+  status: "Published" | "Draft";
+  createdAt: string;
+}
+
 interface AppStateContextType {
   delegates: Delegate[];
   settings: CampSettings;
   currentDelegate: Delegate | null;
   isAdminLoggedIn: boolean;
+  currentAdmin: Administrator | null;
+  administrators: Administrator[];
+  announcements: Announcement[];
   registerDelegate: (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => Delegate;
   confirmPayment: (reference: string) => void;
   overridePayment: (reference: string) => void;
@@ -59,6 +82,11 @@ interface AppStateContextType {
   loginAsDelegate: (identifier: string) => boolean; // identifier can be email or reference
   logoutDelegate: () => void;
   updateSettings: (newSettings: Partial<CampSettings>) => void;
+  addAdministrator: (fullName: string, email: string, role: "Super Admin" | "Registry") => Promise<void>;
+  deleteAdministrator: (id: string) => Promise<void>;
+  publishAnnouncement: (title: string, category: Announcement["category"], content: string, expiryDate?: string) => Promise<void>;
+  saveAnnouncementDraft: (title: string, category: Announcement["category"], content: string, expiryDate?: string) => Promise<void>;
+  deleteAnnouncement: (id: string) => Promise<void>;
 }
 
 const INITIAL_DELEGATES: Delegate[] = [
@@ -241,6 +269,46 @@ const INITIAL_SETTINGS: CampSettings = {
   autoGroupingEnabled: true,
 };
 
+const INITIAL_ADMINISTRATORS: Administrator[] = [
+  {
+    id: "admin_1",
+    fullName: "Usman Farooq",
+    email: "admin@example.com",
+    role: "Super Admin",
+    status: "Active",
+    lastLogin: "2026-07-14T03:22:28Z",
+    createdAt: "2026-07-08T03:03:13Z",
+  },
+  {
+    id: "admin_2",
+    fullName: "Musa Bello",
+    email: "musa@example.com",
+    role: "Registry",
+    status: "Active",
+    lastLogin: "2026-07-13T10:00:00Z",
+    createdAt: "2026-07-08T03:05:00Z",
+  }
+];
+
+const INITIAL_ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: "ann_1",
+    title: "HTC Registration Deadline Extended",
+    category: "Logistics",
+    content: "We have extended registration for the HTC July Session until July 20. Please complete your fee payment as early as possible to secure your hostel allocation.",
+    status: "Published",
+    createdAt: "2026-07-11T09:00:00Z",
+  },
+  {
+    id: "ann_2",
+    title: "Pre-camp Briefing Session",
+    category: "Curriculum",
+    content: "There will be a virtual pre-camp meeting on Zoom for all registered undergraduates and school leavers. The link will be dispatched via email. We will outline the course curriculum and medical guidelines.",
+    status: "Published",
+    createdAt: "2026-07-08T11:30:00Z",
+  }
+];
+
 export const getDelegateFee = (category: string, yearOfStudy?: string) => {
   if (category === "Secondary School") {
     return 4000;
@@ -258,6 +326,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [settings, setSettings] = useState<CampSettings>(INITIAL_SETTINGS);
   const [currentDelegate, setCurrentDelegate] = useState<Delegate | null>(null);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
+  const [currentAdmin, setCurrentAdmin] = useState<Administrator | null>(null);
+  const [administrators, setAdministrators] = useState<Administrator[]>(INITIAL_ADMINISTRATORS);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load initial state from sessionStorage on client side after mount
@@ -294,6 +365,33 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     }
 
+    const storedCurrentAdmin = sessionStorage.getItem("htc_current_admin");
+    if (storedCurrentAdmin) {
+      try {
+        setCurrentAdmin(JSON.parse(storedCurrentAdmin));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const storedAdministrators = sessionStorage.getItem("htc_administrators");
+    if (storedAdministrators) {
+      try {
+        setAdministrators(JSON.parse(storedAdministrators));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const storedAnnouncements = sessionStorage.getItem("htc_announcements");
+    if (storedAnnouncements) {
+      try {
+        setAnnouncements(JSON.parse(storedAnnouncements));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     const storedAdminLoggedIn = sessionStorage.getItem("htc_admin_logged_in");
     if (storedAdminLoggedIn) {
       setIsAdminLoggedIn(storedAdminLoggedIn === "true");
@@ -324,6 +422,26 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
           if (!delegatesError && delegatesData) {
             setDelegates(delegatesData);
+          }
+
+          // Fetch administrators
+          const { data: adminsData, error: adminsError } = await supabase
+            .from("administrators")
+            .select("*")
+            .order("createdAt", { ascending: true });
+
+          if (!adminsError && adminsData) {
+            setAdministrators(adminsData);
+          }
+
+          // Fetch announcements
+          const { data: announcementsData, error: announcementsError } = await supabase
+            .from("announcements")
+            .select("*")
+            .order("createdAt", { ascending: false });
+
+          if (!announcementsError && announcementsData) {
+            setAnnouncements(announcementsData);
           }
         } catch (err) {
           console.error("Failed to sync from Supabase on mount:", err);
@@ -371,6 +489,25 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!isLoaded) return;
     sessionStorage.setItem("htc_admin_logged_in", String(isAdminLoggedIn));
   }, [isAdminLoggedIn, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (currentAdmin) {
+      sessionStorage.setItem("htc_current_admin", JSON.stringify(currentAdmin));
+    } else {
+      sessionStorage.removeItem("htc_current_admin");
+    }
+  }, [currentAdmin, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    sessionStorage.setItem("htc_administrators", JSON.stringify(administrators));
+  }, [administrators, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    sessionStorage.setItem("htc_announcements", JSON.stringify(announcements));
+  }, [announcements, isLoaded]);
 
   const registerDelegate = (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => {
     const timestamp = Date.now();
@@ -604,17 +741,136 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const loginAsAdmin = (email: string, password: string) => {
-    const validEmail = email.trim().toLowerCase() === "admin@ikeja-area.org" || email.trim().toLowerCase() === "admin@example.com";
+    const trimmedEmail = email.trim().toLowerCase();
     const validPassword = password === "admin123" || password === "htc2026";
-    if (validEmail && validPassword) {
+
+    if (!validPassword) return false;
+
+    // Check fallback hardcoded superadmin accounts
+    if (trimmedEmail === "admin@ikeja-area.org" || trimmedEmail === "admin@example.com") {
+      const defaultAdmin: Administrator = {
+        id: "admin_1",
+        fullName: "Usman Farooq",
+        email: trimmedEmail,
+        role: "Super Admin",
+        status: "Active",
+        createdAt: new Date().toISOString(),
+      };
+      setCurrentAdmin(defaultAdmin);
       setIsAdminLoggedIn(true);
       return true;
     }
+
+    // Check registered administrators list
+    const matchedAdmin = administrators.find(
+      (a) => a.email.toLowerCase() === trimmedEmail && a.status === "Active"
+    );
+    if (matchedAdmin) {
+      setCurrentAdmin(matchedAdmin);
+      setIsAdminLoggedIn(true);
+      return true;
+    }
+
     return false;
   };
 
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
+    setCurrentAdmin(null);
+  };
+
+  const addAdministrator = async (fullName: string, email: string, role: "Super Admin" | "Registry") => {
+    const newAdmin: Administrator = {
+      id: `admin_${Date.now()}`,
+      fullName,
+      email,
+      role,
+      status: "Pending", // invites default to Pending status
+      createdAt: new Date().toISOString(),
+    };
+
+    setAdministrators((prev) => [...prev, newAdmin]);
+
+    if (hasSupabase) {
+      const { error } = await supabase.from("administrators").insert(newAdmin);
+      if (error) {
+        console.error("Failed to insert administrator to Supabase:", error);
+      }
+    }
+  };
+
+  const deleteAdministrator = async (id: string) => {
+    setAdministrators((prev) => prev.filter((a) => a.id !== id));
+
+    if (hasSupabase) {
+      const { error } = await supabase.from("administrators").delete().eq("id", id);
+      if (error) {
+        console.error("Failed to delete administrator from Supabase:", error);
+      }
+    }
+  };
+
+  const publishAnnouncement = async (
+    title: string,
+    category: Announcement["category"],
+    content: string,
+    expiryDate?: string
+  ) => {
+    const newAnnouncement: Announcement = {
+      id: `ann_${Date.now()}`,
+      title,
+      category,
+      content,
+      expiryDate,
+      status: "Published",
+      createdAt: new Date().toISOString(),
+    };
+
+    setAnnouncements((prev) => [newAnnouncement, ...prev]);
+
+    if (hasSupabase) {
+      const { error } = await supabase.from("announcements").insert(newAnnouncement);
+      if (error) {
+        console.error("Failed to publish announcement to Supabase:", error);
+      }
+    }
+  };
+
+  const saveAnnouncementDraft = async (
+    title: string,
+    category: Announcement["category"],
+    content: string,
+    expiryDate?: string
+  ) => {
+    const newAnnouncement: Announcement = {
+      id: `ann_${Date.now()}`,
+      title,
+      category,
+      content,
+      expiryDate,
+      status: "Draft",
+      createdAt: new Date().toISOString(),
+    };
+
+    setAnnouncements((prev) => [newAnnouncement, ...prev]);
+
+    if (hasSupabase) {
+      const { error } = await supabase.from("announcements").insert(newAnnouncement);
+      if (error) {
+        console.error("Failed to save draft announcement to Supabase:", error);
+      }
+    }
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+
+    if (hasSupabase) {
+      const { error } = await supabase.from("announcements").delete().eq("id", id);
+      if (error) {
+        console.error("Failed to delete announcement from Supabase:", error);
+      }
+    }
   };
 
   const loginAsDelegate = (identifier: string) => {
@@ -665,6 +921,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         settings,
         currentDelegate,
         isAdminLoggedIn,
+        currentAdmin,
+        administrators,
+        announcements,
         registerDelegate,
         confirmPayment,
         overridePayment,
@@ -676,6 +935,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loginAsDelegate,
         logoutDelegate,
         updateSettings,
+        addAdministrator,
+        deleteAdministrator,
+        publishAnnouncement,
+        saveAnnouncementDraft,
+        deleteAnnouncement,
       }}
     >
       {children}

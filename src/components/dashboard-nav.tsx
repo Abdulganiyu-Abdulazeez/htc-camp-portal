@@ -15,6 +15,7 @@ import {
   BarChart3,
   Database,
   Settings,
+  Users,
 } from "lucide-react";
 
 interface DashboardNavProps {
@@ -24,7 +25,7 @@ interface DashboardNavProps {
 export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentDelegate, logoutDelegate, logoutAdmin } = useAppState();
+  const { currentDelegate, currentAdmin, logoutDelegate, logoutAdmin } = useAppState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getInitials = (name: string) => {
@@ -79,6 +80,20 @@ export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
       icon: Database,
     },
     {
+      href: "/admin/dashboard/announcements",
+      label: "Announcement Center",
+      icon: Megaphone,
+    },
+    ...(currentAdmin?.role === "Super Admin"
+      ? [
+          {
+            href: "/admin/dashboard/access",
+            label: "Manage Access",
+            icon: Users,
+          },
+        ]
+      : []),
+    {
       href: "/admin/dashboard/settings",
       label: "Camp Settings",
       icon: Settings,
@@ -129,12 +144,12 @@ export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
             <div className="flex items-center gap-3 py-4 border-b border-outline-variant">
               {isAdmin ? (
                 <>
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                    AD
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                    {currentAdmin ? getInitials(currentAdmin.fullName) : "AD"}
                   </div>
-                  <div>
-                    <p className="font-bold text-sm leading-tight">HTC Admin</p>
-                    <p className="text-[10px] text-primary font-bold tracking-wider mt-0.5">SECURE ACCESS</p>
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-sm leading-tight truncate">{currentAdmin ? currentAdmin.fullName : "HTC Admin"}</p>
+                    <p className="text-[10px] text-primary font-bold tracking-wider mt-0.5 uppercase truncate">{currentAdmin ? currentAdmin.role : "SECURE ACCESS"}</p>
                   </div>
                 </>
               ) : (
@@ -203,12 +218,12 @@ export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
         {isAdmin ? (
           <div className="flex items-center gap-3 p-3 bg-surface-container-high rounded-xl">
             <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
-              AD
+              {currentAdmin ? getInitials(currentAdmin.fullName) : "AD"}
             </div>
             <div className="overflow-hidden">
-              <p className="font-bold text-sm text-on-surface truncate leading-tight">HTC Admin</p>
-              <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 text-[9px] font-bold rounded-full mt-1 inline-block">
-                Session Active
+              <p className="font-bold text-sm text-on-surface truncate leading-tight">{currentAdmin ? currentAdmin.fullName : "HTC Admin"}</p>
+              <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 text-[9px] font-bold rounded-full mt-1 inline-block truncate">
+                {currentAdmin ? currentAdmin.role : "Session Active"}
               </span>
             </div>
           </div>

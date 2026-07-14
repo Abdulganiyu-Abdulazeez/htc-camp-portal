@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import Link from "next/link";
 import { useAppState, Delegate, getDelegateFee } from "@/context/app-state";
 import { CustomSelect } from "@/components/custom-select";
 import {
@@ -12,6 +13,7 @@ import {
   CreditCard,
   ShieldCheck,
   Send,
+  Eye,
 } from "lucide-react";
 
 const GENDER_FILTER_OPTIONS = [
@@ -394,6 +396,13 @@ export default function AdminOperationsPage() {
                   </td>
                   <td className="p-4 text-center">
                     <div className="flex gap-2 justify-center">
+                      <Link
+                        href={`/admin/dashboard/delegate/${d.id}`}
+                        className="p-1 border border-outline text-on-surface hover:text-primary rounded hover:bg-surface-container transition-colors"
+                        title="View Full Profile Details"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Link>
                       {d.paymentStatus === "pending" && (
                         <button
                           onClick={() => setVerifyingDelegate(d)}
