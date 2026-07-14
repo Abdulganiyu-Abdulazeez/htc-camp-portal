@@ -171,9 +171,8 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section id="hero" className="relative py-20 px-6 md:px-10 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
-        <h2 className="text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight max-w-4xl">
-          Holiday Training Course (HTC '26): <br />
-          <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
+        <h2 className="text-4xl md:text-5xl font-extrabold text-on-surface leading-tight tracking-tight max-w-5xl">
+          Holiday Training Course (HTC '26) - <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
         </h2>
         <p className="text-lg text-on-surface-variant max-w-3xl leading-relaxed">
           The MSSN Ikeja Area Council Holiday Training Course (HTC '26) is your chance to master a practical craft alongside driven peers and become The Credible Maestro you were meant to be.
@@ -247,7 +246,7 @@ export default function LandingPage() {
               The Muslim Students' Society of Nigeria (MSSN), Ikeja Area Council, is the premier student body coordinating Islamic activities and representing Muslim students across primary, secondary, and tertiary institutions, as well as school-leavers, within the Ikeja and Ojodu Local Government areas of Lagos State.
             </p>
             <p className="text-on-surface-variant leading-relaxed">
-              While the state-wide **Islamic Vacation Course (IVC)** is held in December, the **Holiday Training Course (HTC)** is Ikeja's localized, non-residential training program. The HTC is designed specifically to utilize the school vacation period to protect students from negative societal influences by immersing them in a vibrant, supportive, and spiritually uplifting Islamic learning environment.
+              While the state-wide <strong>Islamic Vacation Course (IVC)</strong> is held in December, the <strong>Holiday Training Course (HTC)</strong> is Ikeja's localized, non-residential training program. The HTC is designed specifically to utilize the school vacation period to protect students from negative societal influences by immersing them in a vibrant, supportive, and spiritually uplifting Islamic learning environment.
             </p>
           </div>
         </div>
@@ -401,7 +400,7 @@ export default function LandingPage() {
           <span className="text-xs font-bold text-primary tracking-widest uppercase mb-2 block">Our Pillars</span>
           <h3 className="text-3xl font-extrabold mb-4 text-on-surface">What HTC Offers You</h3>
           <p className="text-on-surface-variant">
-            A holistic, residential training curriculum designed to nurture your spiritual devotion, practical capabilities, and communal bonds.
+            A holistic, non-residential training curriculum designed to nurture your spiritual devotion, practical capabilities, and communal bonds.
           </p>
         </div>
 
@@ -412,7 +411,7 @@ export default function LandingPage() {
             </div>
             <h4 className="text-xl font-bold text-on-surface">Tarbiyyah & Devotion</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Daily congregational Solah, Qiyamul-Layl (Tahajjud), morning Adh-dhikr, and soul-inspiring Tafseer and Fiqh classes led by seasoned Islamic scholars.
+              Daily congregational Solah, Solatu duha, morning Adh-dhikr, and soul-inspiring Tafseer and Fiqh classes led by seasoned Islamic scholars.
             </p>
           </div>
 
@@ -422,7 +421,7 @@ export default function LandingPage() {
             </div>
             <h4 className="text-xl font-bold text-on-surface">Vocations & Technology</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Practical workshops in digital literacy (web dev, graphics design) alongside self-reliance skills like catering, baking, and soap-making.
+              Practical workshops in Videography/Video editing, Mobile graphics, Crocheting, Ankara crafts, public speaking & creative writing.
             </p>
           </div>
 
@@ -432,7 +431,7 @@ export default function LandingPage() {
             </div>
             <h4 className="text-xl font-bold text-on-surface">Islamic Brotherhood</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Building lifetime bonds, unity, and healthy networking through team sports, debates, collaborative problem-solving, and shared living.
+              Building lifetime bonds, unity, and healthy networking through collaborative problem-solving.
             </p>
           </div>
         </div>
@@ -455,18 +454,6 @@ export default function LandingPage() {
                   <p className="text-xs text-on-surface-variant">45 Adedosu Street, Keke, Agege, Lagos State, Nigeria</p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-4 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant">
-                <Bus className="text-primary w-6 h-6 shrink-0" />
-                <div>
-                  <p className="font-bold text-sm">Coordinated Transport</p>
-                  <p className="text-xs text-on-surface-variant">Departure from Ikeja Central Mosque at 8:00 AM on {getDepartureDateStr()}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 italic text-primary font-medium text-sm">
-              \"A serene environment is the first step towards a peaceful heart. We've secured a facility that honors that principle.\"
             </div>
           </div>
 
