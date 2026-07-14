@@ -171,8 +171,9 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section id="hero" className="relative py-20 px-6 md:px-10 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
-        <h2 className="text-4xl md:text-5xl font-extrabold text-on-surface leading-tight tracking-tight max-w-5xl">
-          Holiday Training Course (HTC '26) - <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
+        <h2 className="text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight max-w-4xl">
+          Holiday Training Course (HTC '26) <br />
+          <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
         </h2>
         <p className="text-lg text-on-surface-variant max-w-3xl leading-relaxed">
           The MSSN Ikeja Area Council Holiday Training Course (HTC '26) is your chance to master a practical craft alongside driven peers and become The Credible Maestro you were meant to be.
