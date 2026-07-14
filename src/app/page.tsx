@@ -16,16 +16,23 @@ import {
   Map,
   X,
   AlertCircle,
-  LogIn
+  LogIn,
+  BookOpen,
+  Cpu,
+  Handshake,
+  Bookmark,
+  Clock
 } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { delegates, loginAsDelegate, settings } = useAppState();
+  const { delegates, loginAsDelegate, settings, loginAsAdmin } = useAppState();
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [activeNav, setActiveNav] = useState("home");
+  const [isAdminPasswordMode, setIsAdminPasswordMode] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
 
   const handleCheckStatus = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +40,36 @@ export default function LandingPage() {
       setErrorMsg("Please enter your email or reference ID.");
       return;
     }
+    
+    const trimmedInput = identifier.trim().toLowerCase();
+    if (trimmedInput === "fazaziishola@gmail.com" || trimmedInput === "abdulganiyuabdulazeez20@gmail.com") {
+      setIsAdminPasswordMode(true);
+      setErrorMsg("");
+      return;
+    }
+
     const success = loginAsDelegate(identifier);
     if (success) {
       router.push("/dashboard");
     } else {
       setErrorMsg("No registration found with this email or reference ID.");
     }
+  };
+
+  const handleAdminPasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPassword.trim()) {
+      setErrorMsg("Please enter your password.");
+      return;
+    }
+    if (adminPassword === "HtcAdminPortal'26") {
+      const success = loginAsAdmin("admin@example.com", "htc2026");
+      if (success) {
+        router.push("/admin/dashboard");
+        return;
+      }
+    }
+    setErrorMsg("Incorrect admin password.");
   };
 
   // Calculate live stats
@@ -153,34 +184,19 @@ export default function LandingPage() {
             onClick={() => setShowStatusModal(true)}
             className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary-container/10 transition-colors"
           >
-            Check Status
+            Login
           </button>
-          <Link
-            href="/admin/login"
-            className="px-4 py-2 text-on-surface-variant hover:text-primary text-sm font-bold transition-colors"
-          >
-            Admin Portal
-          </Link>
         </div>
       </header>
 
       {/* Hero Section */}
       <section id="hero" className="relative py-20 px-6 md:px-10 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
-        <div className="flex flex-col items-center gap-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-semibold rounded-full">
-            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            July Session Registration is Open
-          </div>
-          <span className="text-xs font-bold text-on-surface-variant tracking-wider uppercase italic mt-1 block">
-            "La ilaha illallah Muhammadur-Rasuulul Allah"
-          </span>
-        </div>
         <h2 className="text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight max-w-4xl">
-          Holiday Training Course (HTC): <br />
-          <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Spiritual Renewal, Vocations & Leadership</span>
+          Holiday Training Course (HTC '26) <br />
+          <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
         </h2>
-        <p className="text-lg text-on-surface-variant max-w-2xl">
-          Empowering Muslim students with sound Islamic knowledge, moral integrity, academic guidance, and contemporary life skills. Join us for a life-transforming 3-day mid-year residential camp.
+        <p className="text-lg text-on-surface-variant max-w-3xl leading-relaxed">
+          The MSSN Ikeja Area Council Holiday Training Course (HTC '26) is your chance to master a practical craft alongside driven peers and become The Credible Maestro you were meant to be.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
@@ -195,12 +211,12 @@ export default function LandingPage() {
             onClick={() => setShowStatusModal(true)}
             className="px-8 py-4 border border-outline text-on-surface-variant text-base font-bold rounded-lg hover:bg-surface-container/50 transition-all flex items-center justify-center gap-2"
           >
-            Check Registration Status
+            Login
           </button>
         </div>
 
-        {/* Quick Date and Venue Badges */}
-        <div className="flex flex-wrap justify-center gap-6 mt-6 max-w-3xl">
+        {/* Quick Date, Time and Venue Badges */}
+        <div className="flex flex-wrap justify-center gap-6 mt-6 max-w-4xl">
           <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
             <Calendar className="text-primary w-5 h-5" />
             <div className="text-left">
@@ -209,10 +225,17 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
+            <Clock className="text-primary w-5 h-5" />
+            <div className="text-left">
+              <p className="text-xs text-on-surface-variant">Camp Time & Mode</p>
+              <p className="text-sm font-bold">8:00 AM – 4:00 PM Daily (Non-Residential)</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
             <MapPin className="text-primary w-5 h-5" />
             <div className="text-left">
               <p className="text-xs text-on-surface-variant">Camp Venue</p>
-              <p className="text-sm font-bold">Al-Hikmat Nursery & Primary School, Agege, Lagos</p>
+              <p className="text-sm font-bold">Al-Hikmat Nursery & Primary School</p>
             </div>
           </div>
         </div>
@@ -244,8 +267,109 @@ export default function LandingPage() {
               The Muslim Students' Society of Nigeria (MSSN), Ikeja Area Council, is the premier student body coordinating Islamic activities and representing Muslim students across primary, secondary, and tertiary institutions, as well as school-leavers, within the Ikeja and Ojodu Local Government areas of Lagos State.
             </p>
             <p className="text-on-surface-variant leading-relaxed">
-              While the state-wide **Islamic Vacation Course (IVC)** is held in December, the **Holiday Training Course (HTC)** is Ikeja's localized, residential training camp. The HTC is designed specifically to utilize the school vacation period to protect students from negative societal influences by immersing them in a vibrant, supportive, and spiritually uplifting Islamic learning environment.
+              While the state-wide <strong>Islamic Vacation Course (IVC)</strong> is held in December, the <strong>Holiday Training Course (HTC)</strong> is Ikeja's localized, non-residential training program. The HTC is designed specifically to utilize the school vacation period to protect students from negative societal influences by immersing them in a vibrant, supportive, and spiritually uplifting Islamic learning environment.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Camp Details Section */}
+      <section id="details" className="py-20 bg-background border-t border-outline-variant">
+        <div className="max-w-container-max mx-auto px-6 md:px-10 w-full flex flex-col gap-12">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="text-xs font-bold text-primary tracking-widest uppercase mb-2 block">Program Overview</span>
+            <h3 className="text-3xl font-extrabold text-on-surface">HTC '26 Camp Information</h3>
+            <p className="text-on-surface-variant mt-2">
+              Everything you need to know about the upcoming Holiday Training Course session.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Card: Theme, Memory Lane & Skills */}
+            <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="p-3.5 bg-primary/10 text-primary rounded-2xl shrink-0">
+                  <Bookmark className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Official Theme</span>
+                  <h4 className="text-2xl font-extrabold text-primary mt-1">The Credible Maestro</h4>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="p-3.5 bg-accent/10 text-accent rounded-2xl shrink-0">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Memory Lane (Quran Verse)</span>
+                  <p className="text-base font-bold text-on-surface mt-1">Suratul Yusuf [Q 12 V 54-57]</p>
+                  <p className="text-xs text-on-surface-variant mt-1.5 italic">
+                    Focuses on competence, credibility, and leadership as exemplified by Prophet Yusuf (A.S.).
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-outline-variant pt-6">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-3">Vocational Skills Offered</span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Videography/Video editing",
+                    "Mobile graphics",
+                    "Crocheting",
+                    "Ankara crafts",
+                    "public speaking & creative writing"
+                  ].map((skill, index) => (
+                    <span key={index} className="px-3.5 py-1.5 bg-surface-container rounded-full text-xs font-semibold text-on-surface border border-outline-variant">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Card: Schedule, Venue & Fees */}
+            <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm justify-between">
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant text-primary shrink-0">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Dates & Time</span>
+                    <p className="text-sm font-bold text-on-surface">Sat. 25th – Mon. 27th July, 2026</p>
+                    <p className="text-xs text-on-surface-variant">8:00 AM – 4:00 PM Daily (Non-Residential)</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant text-primary shrink-0">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Venue</span>
+                    <p className="text-sm font-bold text-on-surface">Al-Hikmat Nursery & Primary School</p>
+                    <p className="text-xs text-on-surface-variant">Keke, Agege, Lagos State</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-outline-variant pt-6 flex flex-col gap-4">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">Camp Fees Structure</span>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant flex flex-col gap-1 text-center">
+                    <span className="text-xs text-on-surface-variant font-medium">Secondary / Leavers</span>
+                    <span className="text-2xl font-extrabold text-primary">₦4,000</span>
+                  </div>
+
+                  <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant flex flex-col gap-1 text-center">
+                    <span className="text-xs text-on-surface-variant font-medium">Undergraduates / Others</span>
+                    <span className="text-2xl font-extrabold text-primary">₦6,000</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -297,38 +421,38 @@ export default function LandingPage() {
           <span className="text-xs font-bold text-primary tracking-widest uppercase mb-2 block">Our Pillars</span>
           <h3 className="text-3xl font-extrabold mb-4 text-on-surface">What HTC Offers You</h3>
           <p className="text-on-surface-variant">
-            A holistic, residential training curriculum designed to nurture your spiritual devotion, practical capabilities, and communal bonds.
+            A holistic, non-residential training curriculum designed to nurture your spiritual devotion, practical capabilities, and communal bonds.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-5 hover:shadow-lg transition-all group hover:-translate-y-1">
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-primary group-hover:text-white transition-all">
-              📖
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+              <BookOpen className="w-6 h-6" />
             </div>
             <h4 className="text-xl font-bold text-on-surface">Tarbiyyah & Devotion</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Daily congregational Solah, Qiyamul-Layl (Tahajjud), morning Adh-dhikr, and soul-inspiring Tafseer and Fiqh classes led by seasoned Islamic scholars.
+              Daily congregational Solah, Solatu duha, morning Adh-dhikr, and soul-inspiring Tafseer and Fiqh classes led by seasoned Islamic scholars.
             </p>
           </div>
 
           <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-5 hover:shadow-lg transition-all group hover:-translate-y-1">
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-primary group-hover:text-white transition-all">
-              💻
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+              <Cpu className="w-6 h-6" />
             </div>
             <h4 className="text-xl font-bold text-on-surface">Vocations & Technology</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Practical workshops in digital literacy (web dev, graphics design) alongside self-reliance skills like catering, baking, and soap-making.
+              Practical workshops in Videography/Video editing, Mobile graphics, Crocheting, Ankara crafts, public speaking & creative writing.
             </p>
           </div>
 
           <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-5 hover:shadow-lg transition-all group hover:-translate-y-1">
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-primary group-hover:text-white transition-all">
-              🤝
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+              <Handshake className="w-6 h-6" />
             </div>
             <h4 className="text-xl font-bold text-on-surface">Islamic Brotherhood</h4>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Building lifetime bonds, unity, and healthy networking through team sports, debates, collaborative problem-solving, and shared living.
+              Building lifetime bonds, unity, and healthy networking through collaborative problem-solving.
             </p>
           </div>
         </div>
@@ -351,18 +475,6 @@ export default function LandingPage() {
                   <p className="text-xs text-on-surface-variant">45 Adedosu Street, Keke, Agege, Lagos State, Nigeria</p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-4 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant">
-                <Bus className="text-primary w-6 h-6 shrink-0" />
-                <div>
-                  <p className="font-bold text-sm">Coordinated Transport</p>
-                  <p className="text-xs text-on-surface-variant">Departure from Ikeja Central Mosque at 8:00 AM on {getDepartureDateStr()}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 italic text-primary font-medium text-sm">
-              \"A serene environment is the first step towards a peaceful heart. We've secured a facility that honors that principle.\"
             </div>
           </div>
 
@@ -381,7 +493,7 @@ export default function LandingPage() {
             <div className="my-auto flex flex-col items-center gap-3">
               <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center animate-ping absolute" />
               <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white relative shadow-lg">
-                📍
+                <MapPin className="w-6 h-6" />
               </div>
               <span className="text-sm font-bold text-on-surface mt-2">Al-Hikmat Nursery & Primary School Area</span>
             </div>
@@ -406,47 +518,104 @@ export default function LandingPage() {
                 setShowStatusModal(false);
                 setErrorMsg("");
                 setIdentifier("");
+                setIsAdminPasswordMode(false);
+                setAdminPassword("");
               }}
               className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h4 className="text-xl font-bold text-primary mb-3">Check Registration Status</h4>
-            <p className="text-sm text-on-surface-variant mb-6">
-              Enter the Email address or Payment Reference ID (`REF-XXXXXXXX`) you used during registration to access your digital badge and details.
-            </p>
-
-            <form onSubmit={handleCheckStatus} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-on-surface-variant">Email / Reference ID</label>
-                <input
-                  type="text"
-                  placeholder="e.g. abdullah@example.com or REF-1720894562"
-                  value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    setErrorMsg("");
-                  }}
-                  className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
-                />
-              </div>
-
-              {errorMsg && (
-                <p className="text-xs text-error font-medium flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {errorMsg}
+            {!isAdminPasswordMode ? (
+              <>
+                <h4 className="text-xl font-bold text-primary mb-3">Login / Check Status</h4>
+                <p className="text-sm text-on-surface-variant mb-6">
+                  Enter the Email address or Payment Reference ID (`REF-XXXXXXXX`) you used during registration to access your digital badge and details.
                 </p>
-              )}
 
-              <button
-                type="submit"
-                className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
-              >
-                Access Dashboard
-                <LogIn className="w-4 h-4" />
-              </button>
-            </form>
+                <form onSubmit={handleCheckStatus} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-on-surface-variant">Email / Reference ID</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. abdullah@example.com or REF-1720894562"
+                      value={identifier}
+                      onChange={(e) => {
+                        setIdentifier(e.target.value);
+                        setErrorMsg("");
+                      }}
+                      className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
+                    />
+                  </div>
+
+                  {errorMsg && (
+                    <p className="text-xs text-error font-medium flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {errorMsg}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
+                  >
+                    Access Dashboard
+                    <LogIn className="w-4 h-4" />
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <h4 className="text-xl font-bold text-primary mb-3">Admin Portal Login</h4>
+                <p className="text-sm text-on-surface-variant mb-6">
+                  Please enter your administrator password for account <strong className="text-primary">{identifier}</strong>.
+                </p>
+
+                <form onSubmit={handleAdminPasswordSubmit} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-on-surface-variant">Admin Password</label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={adminPassword}
+                      onChange={(e) => {
+                        setAdminPassword(e.target.value);
+                        setErrorMsg("");
+                      }}
+                      className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
+                    />
+                  </div>
+
+                  {errorMsg && (
+                    <p className="text-xs text-error font-medium flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {errorMsg}
+                    </p>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAdminPasswordMode(false);
+                        setAdminPassword("");
+                        setErrorMsg("");
+                      }}
+                      className="flex-1 py-3 border border-outline text-on-surface-variant font-bold rounded-lg hover:bg-surface-container/50 transition-all text-sm"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
+                    >
+                      Verify & Login
+                      <LogIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -32,6 +32,7 @@ export interface Delegate {
   assignedGroup: string; // e.g. "Abu Bakr", "Aisha", "Khadijah", "Umar", "None"
   assignedRoom: string;  // e.g. "Room 4", "None"
   createdAt: string;
+  skillOfInterest: string;
 }
 
 export interface CampSettings {
@@ -82,6 +83,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Abu Bakr",
     assignedRoom: "Room 4",
     createdAt: "2026-07-08T10:00:00Z",
+    skillOfInterest: "Videography/Video editing",
   },
   {
     id: "HTC-2026-0123",
@@ -103,6 +105,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Aisha",
     assignedRoom: "Room 1",
     createdAt: "2026-07-09T11:30:00Z",
+    skillOfInterest: "Mobile graphics",
   },
   {
     id: "HTC-2026-0294",
@@ -124,6 +127,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Aisha",
     assignedRoom: "Room 2",
     createdAt: "2026-07-09T14:45:00Z",
+    skillOfInterest: "Crocheting",
   },
   {
     id: "pending_1",
@@ -143,6 +147,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-10T09:15:00Z",
+    skillOfInterest: "Ankara crafts",
   },
   {
     id: "HTC-2026-0005",
@@ -162,6 +167,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-10T16:20:00Z",
+    skillOfInterest: "public speaking & creative writing",
   },
   {
     id: "pending_2",
@@ -183,6 +189,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T08:00:00Z",
+    skillOfInterest: "Crocheting",
   },
   {
     id: "HTC-2026-0007",
@@ -202,6 +209,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T10:10:00Z",
+    skillOfInterest: "Mobile graphics",
   },
   {
     id: "HTC-2026-0008",
@@ -221,15 +229,26 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T15:30:00Z",
+    skillOfInterest: "public speaking & creative writing",
   }
 ];
 
 const INITIAL_SETTINGS: CampSettings = {
-  campFee: 8500,
+  campFee: 6000, // Base/maximum fee
   capacityLimit: 500,
   startDate: "2026-07-25",
   endDate: "2026-07-27",
   autoGroupingEnabled: true,
+};
+
+export const getDelegateFee = (category: string, yearOfStudy?: string) => {
+  if (category === "Secondary School") {
+    return 4000;
+  }
+  if (category === "Undergraduate/Leaver" && yearOfStudy === "Prospective Candidate") {
+    return 4000;
+  }
+  return 6000;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);

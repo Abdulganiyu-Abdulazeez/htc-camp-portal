@@ -342,6 +342,11 @@ export default function DelegateDashboard() {
                     <span className="font-semibold text-sm">{currentDelegate.category}</span>
                   </div>
 
+                  <div className="flex flex-col gap-1 border-b border-outline-variant pb-2">
+                    <span className="text-on-surface-variant font-medium">Skill of Interest</span>
+                    <span className="font-semibold text-sm">{currentDelegate.skillOfInterest || "N/A"}</span>
+                  </div>
+
                   {currentDelegate.category === "Secondary School" && (
                     <>
                       <div className="flex flex-col gap-1 border-b border-outline-variant pb-2">
