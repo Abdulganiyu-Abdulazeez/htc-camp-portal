@@ -26,6 +26,14 @@ const DISTRICT_OPTIONS = [
   { value: "District 6", label: "District 6" },
 ];
 
+const SKILL_OPTIONS = [
+  { value: "Videography/Video editing", label: "Videography / Video Editing" },
+  { value: "Mobile graphics", label: "Mobile Graphics" },
+  { value: "Crocheting", label: "Crocheting" },
+  { value: "Ankara crafts", label: "Ankara Crafts" },
+  { value: "public speaking & creative writing", label: "Public Speaking & Creative Writing" }
+];
+
 const CLASS_OPTIONS = [
   { value: "JSS 1", label: "JSS 1" },
   { value: "JSS 2", label: "JSS 2" },
@@ -68,7 +76,6 @@ const BLOOD_GROUP_OPTIONS = [
 export default function RegisterPage() {
   const router = useRouter();
   const { registerDelegate, confirmPayment, loginAsDelegate, settings } = useAppState();
-  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy);
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -93,7 +100,10 @@ export default function RegisterPage() {
     genotype: "AA",
     emergencyContactName: "",
     emergencyContactPhone: "",
+    skillOfInterest: "Videography/Video editing",
   });
+
+  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPaystackOverlay, setShowPaystackOverlay] = useState(false);
@@ -582,6 +592,19 @@ export default function RegisterPage() {
                   </div>
                 </div>
               )}
+
+              {/* Skill of Interest Section */}
+              <div className="flex flex-col gap-1.5 mt-4 pt-4 border-t border-outline-variant">
+                <CustomSelect
+                  label="Skill of Interest"
+                  options={SKILL_OPTIONS}
+                  value={formData.skillOfInterest}
+                  onChange={(val) => handleDropdownChange("skillOfInterest", val)}
+                />
+                <p className="text-[10px] text-on-surface-variant leading-relaxed mt-0.5">
+                  Select the vocational skill you want to focus on and master during the Holiday Training Course.
+                </p>
+              </div>
             </div>
           )}
 
@@ -782,6 +805,8 @@ export default function RegisterPage() {
                   <span className="font-semibold text-right">{formData.gender}</span>
                   <span className="text-on-surface-variant">Category:</span>
                   <span className="font-semibold text-right">{formData.category}</span>
+                  <span className="text-on-surface-variant">Skill of Interest:</span>
+                  <span className="font-semibold text-right">{formData.skillOfInterest}</span>
                 </div>
               </div>
             </div>

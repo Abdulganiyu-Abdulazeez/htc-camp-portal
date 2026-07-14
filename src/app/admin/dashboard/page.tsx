@@ -575,7 +575,7 @@ export default function AdminDashboard() {
                                 Company: {d.school} | Job: {d.jobTitle} | Mode: {d.employmentMode}
                               </span>
                             )}
-                            <span className="text-[10px] text-on-surface-variant/80 font-medium block">Gender: {d.gender}</span>
+                            <span className="text-[10px] text-on-surface-variant/80 font-medium block">Gender: {d.gender} | Skill: {d.skillOfInterest || "N/A"}</span>
                           </div>
                         </td>
                         <td className="p-4">
@@ -732,6 +732,8 @@ export default function AdminDashboard() {
                 <span className="font-bold text-right truncate">{verifyingDelegate.email}</span>
                 <span className="text-on-surface-variant">Category:</span>
                 <span className="font-bold text-right">{verifyingDelegate.category}</span>
+                <span className="text-on-surface-variant">Skill of Interest:</span>
+                <span className="font-bold text-right truncate">{verifyingDelegate.skillOfInterest || "N/A"}</span>
                 {verifyingDelegate.category === "Secondary School" && (
                   <>
                     <span className="text-on-surface-variant">School:</span>

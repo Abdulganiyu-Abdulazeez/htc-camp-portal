@@ -31,6 +31,7 @@ export interface Delegate {
   assignedGroup: string; // e.g. "Abu Bakr", "Aisha", "Khadijah", "Umar", "None"
   assignedRoom: string;  // e.g. "Room 4", "None"
   createdAt: string;
+  skillOfInterest: string;
 }
 
 export interface CampSettings {
@@ -81,6 +82,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Abu Bakr",
     assignedRoom: "Room 4",
     createdAt: "2026-07-08T10:00:00Z",
+    skillOfInterest: "Videography/Video editing",
   },
   {
     id: "HTC-2026-0123",
@@ -102,6 +104,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Aisha",
     assignedRoom: "Room 1",
     createdAt: "2026-07-09T11:30:00Z",
+    skillOfInterest: "Mobile graphics",
   },
   {
     id: "HTC-2026-0294",
@@ -123,6 +126,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Aisha",
     assignedRoom: "Room 2",
     createdAt: "2026-07-09T14:45:00Z",
+    skillOfInterest: "Crocheting",
   },
   {
     id: "pending_1",
@@ -142,6 +146,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-10T09:15:00Z",
+    skillOfInterest: "Ankara crafts",
   },
   {
     id: "HTC-2026-0005",
@@ -161,6 +166,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-10T16:20:00Z",
+    skillOfInterest: "public speaking & creative writing",
   },
   {
     id: "pending_2",
@@ -182,6 +188,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T08:00:00Z",
+    skillOfInterest: "Crocheting",
   },
   {
     id: "HTC-2026-0007",
@@ -201,6 +208,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T10:10:00Z",
+    skillOfInterest: "Mobile graphics",
   },
   {
     id: "HTC-2026-0008",
@@ -220,6 +228,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T15:30:00Z",
+    skillOfInterest: "public speaking & creative writing",
   }
 ];
 
@@ -455,7 +464,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const loginAsAdmin = (password: string) => {
-    if (password === "admin123" || password === "htc2026") {
+    if (password === "HtcAdminPortal'26") {
       setIsAdminLoggedIn(true);
       return true;
     }

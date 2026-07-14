@@ -26,11 +26,13 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
-  const { delegates, loginAsDelegate, settings } = useAppState();
+  const { delegates, loginAsDelegate, settings, loginAsAdmin } = useAppState();
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [activeNav, setActiveNav] = useState("home");
+  const [isAdminPasswordMode, setIsAdminPasswordMode] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
 
   const handleCheckStatus = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,11 +40,33 @@ export default function LandingPage() {
       setErrorMsg("Please enter your email or reference ID.");
       return;
     }
+    
+    const trimmedInput = identifier.trim().toLowerCase();
+    if (trimmedInput === "fazaziishola@gmail.com" || trimmedInput === "abdulganiyuabdulazeez20@gmail.com") {
+      setIsAdminPasswordMode(true);
+      setErrorMsg("");
+      return;
+    }
+
     const success = loginAsDelegate(identifier);
     if (success) {
       router.push("/dashboard");
     } else {
       setErrorMsg("No registration found with this email or reference ID.");
+    }
+  };
+
+  const handleAdminPasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPassword.trim()) {
+      setErrorMsg("Please enter your password.");
+      return;
+    }
+    const success = loginAsAdmin(adminPassword);
+    if (success) {
+      router.push("/admin/dashboard");
+    } else {
+      setErrorMsg("Incorrect admin password.");
     }
   };
 
@@ -158,14 +182,8 @@ export default function LandingPage() {
             onClick={() => setShowStatusModal(true)}
             className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary-container/10 transition-colors"
           >
-            Check Status
+            Login
           </button>
-          <Link
-            href="/admin/login"
-            className="px-4 py-2 text-on-surface-variant hover:text-primary text-sm font-bold transition-colors"
-          >
-            Admin Portal
-          </Link>
         </div>
       </header>
 
@@ -191,7 +209,7 @@ export default function LandingPage() {
             onClick={() => setShowStatusModal(true)}
             className="px-8 py-4 border border-outline text-on-surface-variant text-base font-bold rounded-lg hover:bg-surface-container/50 transition-all flex items-center justify-center gap-2"
           >
-            Check Registration Status
+            Login
           </button>
         </div>
 
@@ -498,47 +516,104 @@ export default function LandingPage() {
                 setShowStatusModal(false);
                 setErrorMsg("");
                 setIdentifier("");
+                setIsAdminPasswordMode(false);
+                setAdminPassword("");
               }}
               className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h4 className="text-xl font-bold text-primary mb-3">Check Registration Status</h4>
-            <p className="text-sm text-on-surface-variant mb-6">
-              Enter the Email address or Payment Reference ID (`REF-XXXXXXXX`) you used during registration to access your digital badge and details.
-            </p>
-
-            <form onSubmit={handleCheckStatus} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-on-surface-variant">Email / Reference ID</label>
-                <input
-                  type="text"
-                  placeholder="e.g. abdullah@example.com or REF-1720894562"
-                  value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    setErrorMsg("");
-                  }}
-                  className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
-                />
-              </div>
-
-              {errorMsg && (
-                <p className="text-xs text-error font-medium flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {errorMsg}
+            {!isAdminPasswordMode ? (
+              <>
+                <h4 className="text-xl font-bold text-primary mb-3">Login / Check Status</h4>
+                <p className="text-sm text-on-surface-variant mb-6">
+                  Enter the Email address or Payment Reference ID (`REF-XXXXXXXX`) you used during registration to access your digital badge and details.
                 </p>
-              )}
 
-              <button
-                type="submit"
-                className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
-              >
-                Access Dashboard
-                <LogIn className="w-4 h-4" />
-              </button>
-            </form>
+                <form onSubmit={handleCheckStatus} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-on-surface-variant">Email / Reference ID</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. abdullah@example.com or REF-1720894562"
+                      value={identifier}
+                      onChange={(e) => {
+                        setIdentifier(e.target.value);
+                        setErrorMsg("");
+                      }}
+                      className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
+                    />
+                  </div>
+
+                  {errorMsg && (
+                    <p className="text-xs text-error font-medium flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {errorMsg}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
+                  >
+                    Access Dashboard
+                    <LogIn className="w-4 h-4" />
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <h4 className="text-xl font-bold text-primary mb-3">Admin Portal Login</h4>
+                <p className="text-sm text-on-surface-variant mb-6">
+                  Please enter your administrator password for account <strong className="text-primary">{identifier}</strong>.
+                </p>
+
+                <form onSubmit={handleAdminPasswordSubmit} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-on-surface-variant">Admin Password</label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={adminPassword}
+                      onChange={(e) => {
+                        setAdminPassword(e.target.value);
+                        setErrorMsg("");
+                      }}
+                      className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
+                    />
+                  </div>
+
+                  {errorMsg && (
+                    <p className="text-xs text-error font-medium flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {errorMsg}
+                    </p>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAdminPasswordMode(false);
+                        setAdminPassword("");
+                        setErrorMsg("");
+                      }}
+                      className="flex-1 py-3 border border-outline text-on-surface-variant font-bold rounded-lg hover:bg-surface-container/50 transition-all text-sm"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
+                    >
+                      Verify & Login
+                      <LogIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}
