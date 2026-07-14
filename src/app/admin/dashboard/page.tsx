@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAppState, Delegate } from "@/context/app-state";
+import { useAppState, Delegate, getDelegateFee } from "@/context/app-state";
 import { CustomSelect } from "@/components/custom-select";
 import {
   ShieldAlert,
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
   const totalVerified = delegates.filter((d) => d.paymentStatus === "verified").length;
   const totalRegistrations = delegates.length;
   const totalPending = totalRegistrations - totalVerified;
-  const totalFinancials = totalVerified * settings.campFee;
+  const totalFinancials = delegates.filter((d) => d.paymentStatus === "verified").reduce((sum, d) => sum + getDelegateFee(d.category, d.yearOfStudy), 0);
   const totalUngrouped = delegates.filter((d) => d.paymentStatus === "verified" && d.assignedGroup === "None").length;
 
   return (
@@ -575,7 +575,7 @@ export default function AdminDashboard() {
                                 Company: {d.school} | Job: {d.jobTitle} | Mode: {d.employmentMode}
                               </span>
                             )}
-                            <span className="text-[10px] text-on-surface-variant/80 font-medium block">Gender: {d.gender}</span>
+                            <span className="text-[10px] text-on-surface-variant/80 font-medium block">Gender: {d.gender} | Skill: {d.skillOfInterest || "N/A"}</span>
                           </div>
                         </td>
                         <td className="p-4">
@@ -633,14 +633,18 @@ export default function AdminDashboard() {
             
             <form onSubmit={handleSaveSettings} className="flex flex-col gap-5">
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-on-surface-variant">Camp Registration Fee (₦)</label>
-                  <input
-                    type="number"
-                    value={settingsForm.campFee}
-                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, campFee: Number(e.target.value) }))}
-                    className="w-full px-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg text-sm focus:outline-none"
-                  />
+                <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
+                  <label className="text-xs font-semibold text-on-surface-variant">Camp Registration Fee Structure (₦)</label>
+                  <div className="p-3 bg-surface-container border border-outline-variant rounded-lg text-xs font-medium text-on-surface-variant flex flex-col gap-1">
+                    <div className="flex justify-between">
+                      <span>Secondary / Leavers:</span>
+                      <span className="font-bold text-primary">₦4,000</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Undergraduates / Others:</span>
+                      <span className="font-bold text-primary">₦6,000</span>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-on-surface-variant">Capacity Limit</label>
@@ -728,6 +732,8 @@ export default function AdminDashboard() {
                 <span className="font-bold text-right truncate">{verifyingDelegate.email}</span>
                 <span className="text-on-surface-variant">Category:</span>
                 <span className="font-bold text-right">{verifyingDelegate.category}</span>
+                <span className="text-on-surface-variant">Skill of Interest:</span>
+                <span className="font-bold text-right truncate">{verifyingDelegate.skillOfInterest || "N/A"}</span>
                 {verifyingDelegate.category === "Secondary School" && (
                   <>
                     <span className="text-on-surface-variant">School:</span>

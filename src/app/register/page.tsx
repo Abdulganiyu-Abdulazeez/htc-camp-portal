@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAppState } from "@/context/app-state";
+import { useAppState, getDelegateFee } from "@/context/app-state";
 import { CustomSelect } from "@/components/custom-select";
 import {
   AlertCircle,
@@ -24,6 +24,14 @@ const DISTRICT_OPTIONS = [
   { value: "District 4", label: "District 4" },
   { value: "District 5", label: "District 5" },
   { value: "District 6", label: "District 6" },
+];
+
+const SKILL_OPTIONS = [
+  { value: "Videography/Video editing", label: "Videography / Video Editing" },
+  { value: "Mobile graphics", label: "Mobile Graphics" },
+  { value: "Crocheting", label: "Crocheting" },
+  { value: "Ankara crafts", label: "Ankara Crafts" },
+  { value: "public speaking & creative writing", label: "Public Speaking & Creative Writing" }
 ];
 
 const CLASS_OPTIONS = [
@@ -92,7 +100,10 @@ export default function RegisterPage() {
     genotype: "AA",
     emergencyContactName: "",
     emergencyContactPhone: "",
+    skillOfInterest: "Videography/Video editing",
   });
+
+  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPaystackOverlay, setShowPaystackOverlay] = useState(false);
@@ -201,6 +212,7 @@ export default function RegisterPage() {
         genotype: formData.genotype,
         emergencyContactName: formData.emergencyContactName,
         emergencyContactPhone: formData.emergencyContactPhone,
+        skillOfInterest: formData.skillOfInterest,
       });
       setCurrentRef(newD.reference);
       setShowPaystackOverlay(true);
@@ -581,6 +593,19 @@ export default function RegisterPage() {
                   </div>
                 </div>
               )}
+
+              {/* Skill of Interest Section */}
+              <div className="flex flex-col gap-1.5 mt-4 pt-4 border-t border-outline-variant">
+                <CustomSelect
+                  label="Skill of Interest"
+                  options={SKILL_OPTIONS}
+                  value={formData.skillOfInterest}
+                  onChange={(val) => handleDropdownChange("skillOfInterest", val)}
+                />
+                <p className="text-[10px] text-on-surface-variant leading-relaxed mt-0.5">
+                  Select the vocational skill you want to focus on and master during the Holiday Training Course.
+                </p>
+              </div>
             </div>
           )}
 
@@ -763,12 +788,12 @@ export default function RegisterPage() {
               <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col gap-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-on-surface-variant">HTC July Session Camp Fee</span>
-                  <span className="text-2xl font-extrabold text-primary">₦{settings.campFee.toLocaleString()}</span>
+                  <span className="text-2xl font-extrabold text-primary">₦{currentFee.toLocaleString()}</span>
                 </div>
                 <hr className="border-primary/10" />
                 <div className="flex gap-2.5 items-start">
                   <span className="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
-                  <p className="text-xs text-on-surface-variant">Includes hostel accommodation, breakfast & dinner, lecture study materials, and access to all skills classes.</p>
+                  <p className="text-xs text-on-surface-variant">Includes daily program access, lunch, lecture study materials, practical workshops, and access to all skills classes.</p>
                 </div>
               </div>
 
@@ -781,6 +806,8 @@ export default function RegisterPage() {
                   <span className="font-semibold text-right">{formData.gender}</span>
                   <span className="text-on-surface-variant">Category:</span>
                   <span className="font-semibold text-right">{formData.category}</span>
+                  <span className="text-on-surface-variant">Skill of Interest:</span>
+                  <span className="font-semibold text-right">{formData.skillOfInterest}</span>
                 </div>
               </div>
             </div>
@@ -859,7 +886,7 @@ export default function RegisterPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-slate-500 font-semibold uppercase">Amount</p>
-                  <p className="text-base font-extrabold text-slate-800">₦{settings.campFee.toLocaleString()}</p>
+                  <p className="text-base font-extrabold text-slate-800">₦{currentFee.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -906,7 +933,7 @@ export default function RegisterPage() {
                   onClick={simulateSuccessPayment}
                   className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-lg hover:shadow-emerald-500/10 transition-all text-sm flex items-center justify-center gap-2"
                 >
-                  Confirm & Pay ₦{settings.campFee.toLocaleString()}
+                  Confirm & Pay ₦{currentFee.toLocaleString()}
                 </button>
               )}
             </div>

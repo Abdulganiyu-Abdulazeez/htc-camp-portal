@@ -31,6 +31,7 @@ export interface Delegate {
   assignedGroup: string; // e.g. "Abu Bakr", "Aisha", "Khadijah", "Umar", "None"
   assignedRoom: string;  // e.g. "Room 4", "None"
   createdAt: string;
+  skillOfInterest: string;
 }
 
 export interface CampSettings {
@@ -81,6 +82,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Abu Bakr",
     assignedRoom: "Room 4",
     createdAt: "2026-07-08T10:00:00Z",
+    skillOfInterest: "Videography/Video editing",
   },
   {
     id: "HTC-2026-0123",
@@ -102,6 +104,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Aisha",
     assignedRoom: "Room 1",
     createdAt: "2026-07-09T11:30:00Z",
+    skillOfInterest: "Mobile graphics",
   },
   {
     id: "HTC-2026-0294",
@@ -123,6 +126,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "Aisha",
     assignedRoom: "Room 2",
     createdAt: "2026-07-09T14:45:00Z",
+    skillOfInterest: "Crocheting",
   },
   {
     id: "pending_1",
@@ -142,6 +146,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-10T09:15:00Z",
+    skillOfInterest: "Ankara crafts",
   },
   {
     id: "HTC-2026-0005",
@@ -161,6 +166,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-10T16:20:00Z",
+    skillOfInterest: "public speaking & creative writing",
   },
   {
     id: "pending_2",
@@ -182,6 +188,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T08:00:00Z",
+    skillOfInterest: "Crocheting",
   },
   {
     id: "HTC-2026-0007",
@@ -201,6 +208,7 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T10:10:00Z",
+    skillOfInterest: "Mobile graphics",
   },
   {
     id: "HTC-2026-0008",
@@ -220,93 +228,102 @@ const INITIAL_DELEGATES: Delegate[] = [
     assignedGroup: "None",
     assignedRoom: "None",
     createdAt: "2026-07-11T15:30:00Z",
+    skillOfInterest: "public speaking & creative writing",
   }
 ];
 
 const INITIAL_SETTINGS: CampSettings = {
-  campFee: 8500,
+  campFee: 6000, // Base/maximum fee
   capacityLimit: 500,
   startDate: "2026-07-25",
   endDate: "2026-07-27",
   autoGroupingEnabled: true,
 };
 
+export const getDelegateFee = (category: string, yearOfStudy?: string) => {
+  if (category === "Secondary School") {
+    return 4000;
+  }
+  if (category === "Undergraduate/Leaver" && yearOfStudy === "Prospective Candidate") {
+    return 4000;
+  }
+  return 6000;
+};
+
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
 
 export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [delegates, setDelegates] = useState<Delegate[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("htc_delegates");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch (e) {
-          console.error(e);
-        }
+  const [delegates, setDelegates] = useState<Delegate[]>(INITIAL_DELEGATES);
+  const [settings, setSettings] = useState<CampSettings>(INITIAL_SETTINGS);
+  const [currentDelegate, setCurrentDelegate] = useState<Delegate | null>(null);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const storedDelegates = localStorage.getItem("htc_delegates");
+    const storedSettings = localStorage.getItem("htc_settings");
+    const storedCurrent = localStorage.getItem("htc_current_delegate");
+    const storedAdmin = localStorage.getItem("htc_admin_logged_in");
+
+    if (storedDelegates) {
+      try {
+        setDelegates(JSON.parse(storedDelegates));
+      } catch (e) {
+        console.error(e);
       }
     }
-    return INITIAL_DELEGATES;
-  });
-
-  const [settings, setSettings] = useState<CampSettings>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("htc_settings");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed.startDate === "2026-12-20" || parsed.endDate === "2026-12-27") {
-            parsed.startDate = "2026-07-25";
-            parsed.endDate = "2026-07-27";
-          }
-          return parsed;
-        } catch (e) {
-          console.error(e);
+    if (storedSettings) {
+      try {
+        const parsed = JSON.parse(storedSettings);
+        if (parsed.startDate === "2026-12-20" || parsed.endDate === "2026-12-27") {
+          parsed.startDate = "2026-07-25";
+          parsed.endDate = "2026-07-27";
         }
+        setSettings(parsed);
+      } catch (e) {
+        console.error(e);
       }
     }
-    return INITIAL_SETTINGS;
-  });
-
-  const [currentDelegate, setCurrentDelegate] = useState<Delegate | null>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("htc_current_delegate");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch (e) {
-          console.error(e);
-        }
+    if (storedCurrent) {
+      try {
+        setCurrentDelegate(JSON.parse(storedCurrent));
+      } catch (e) {
+        console.error(e);
       }
     }
-    return null;
-  });
-
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("htc_admin_logged_in") === "true";
+    if (storedAdmin === "true") {
+      setIsAdminLoggedIn(true);
     }
-    return false;
-  });
+    setIsLoaded(true);
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem("htc_delegates", JSON.stringify(delegates));
-  }, [delegates]);
-
-  useEffect(() => {
-    localStorage.setItem("htc_settings", JSON.stringify(settings));
-  }, [settings]);
-
-  useEffect(() => {
-    if (currentDelegate) {
-      localStorage.setItem("htc_current_delegate", JSON.stringify(currentDelegate));
-    } else {
-      localStorage.removeItem("htc_current_delegate");
+    if (isLoaded) {
+      localStorage.setItem("htc_delegates", JSON.stringify(delegates));
     }
-  }, [currentDelegate]);
+  }, [delegates, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem("htc_admin_logged_in", String(isAdminLoggedIn));
-  }, [isAdminLoggedIn]);
+    if (isLoaded) {
+      localStorage.setItem("htc_settings", JSON.stringify(settings));
+    }
+  }, [settings, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      if (currentDelegate) {
+        localStorage.setItem("htc_current_delegate", JSON.stringify(currentDelegate));
+      } else {
+        localStorage.removeItem("htc_current_delegate");
+      }
+    }
+  }, [currentDelegate, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("htc_admin_logged_in", String(isAdminLoggedIn));
+    }
+  }, [isAdminLoggedIn, isLoaded]);
 
   const registerDelegate = (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => {
     const timestamp = Date.now();
@@ -447,7 +464,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const loginAsAdmin = (password: string) => {
-    if (password === "admin123" || password === "htc2026") {
+    if (password === "HtcAdminPortal'26") {
       setIsAdminLoggedIn(true);
       return true;
     }
