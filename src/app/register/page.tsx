@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAppState } from "@/context/app-state";
+import { useAppState, getDelegateFee } from "@/context/app-state";
 import { CustomSelect } from "@/components/custom-select";
 import {
   AlertCircle,
@@ -68,6 +68,7 @@ const BLOOD_GROUP_OPTIONS = [
 export default function RegisterPage() {
   const router = useRouter();
   const { registerDelegate, confirmPayment, loginAsDelegate, settings } = useAppState();
+  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy);
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -763,12 +764,12 @@ export default function RegisterPage() {
               <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col gap-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-on-surface-variant">HTC July Session Camp Fee</span>
-                  <span className="text-2xl font-extrabold text-primary">₦{settings.campFee.toLocaleString()}</span>
+                  <span className="text-2xl font-extrabold text-primary">₦{currentFee.toLocaleString()}</span>
                 </div>
                 <hr className="border-primary/10" />
                 <div className="flex gap-2.5 items-start">
                   <span className="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
-                  <p className="text-xs text-on-surface-variant">Includes hostel accommodation, breakfast & dinner, lecture study materials, and access to all skills classes.</p>
+                  <p className="text-xs text-on-surface-variant">Includes daily program access, lunch, lecture study materials, practical workshops, and access to all skills classes.</p>
                 </div>
               </div>
 
@@ -859,7 +860,7 @@ export default function RegisterPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-slate-500 font-semibold uppercase">Amount</p>
-                  <p className="text-base font-extrabold text-slate-800">₦{settings.campFee.toLocaleString()}</p>
+                  <p className="text-base font-extrabold text-slate-800">₦{currentFee.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -906,7 +907,7 @@ export default function RegisterPage() {
                   onClick={simulateSuccessPayment}
                   className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-lg hover:shadow-emerald-500/10 transition-all text-sm flex items-center justify-center gap-2"
                 >
-                  Confirm & Pay ₦{settings.campFee.toLocaleString()}
+                  Confirm & Pay ₦{currentFee.toLocaleString()}
                 </button>
               )}
             </div>

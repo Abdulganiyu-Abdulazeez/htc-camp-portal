@@ -224,11 +224,21 @@ const INITIAL_DELEGATES: Delegate[] = [
 ];
 
 const INITIAL_SETTINGS: CampSettings = {
-  campFee: 8500,
+  campFee: 6000, // Base/maximum fee
   capacityLimit: 500,
   startDate: "2026-07-25",
   endDate: "2026-07-27",
   autoGroupingEnabled: true,
+};
+
+export const getDelegateFee = (category: string, yearOfStudy?: string) => {
+  if (category === "Secondary School") {
+    return 4000;
+  }
+  if (category === "Undergraduate/Leaver" && yearOfStudy === "Prospective Candidate") {
+    return 4000;
+  }
+  return 6000;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);

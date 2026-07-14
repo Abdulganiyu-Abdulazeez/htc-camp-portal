@@ -19,7 +19,9 @@ import {
   LogIn,
   BookOpen,
   Cpu,
-  Handshake
+  Handshake,
+  Bookmark,
+  Clock
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -170,11 +172,11 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section id="hero" className="relative py-20 px-6 md:px-10 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
         <h2 className="text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight max-w-4xl">
-          Holiday Training Course (HTC): <br />
-          <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Spiritual Renewal, Vocations & Leadership</span>
+          Holiday Training Course (HTC '26): <br />
+          <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
         </h2>
-        <p className="text-lg text-on-surface-variant max-w-2xl">
-          Empowering Muslim students with sound Islamic knowledge, moral integrity, academic guidance, and contemporary life skills. Join us for a life-transforming 3-day mid-year residential camp.
+        <p className="text-lg text-on-surface-variant max-w-3xl leading-relaxed">
+          The MSSN Ikeja Area Council Holiday Training Course (HTC '26) is your chance to master a practical craft alongside driven peers and become The Credible Maestro you were meant to be.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
@@ -193,8 +195,8 @@ export default function LandingPage() {
           </button>
         </div>
 
-        {/* Quick Date and Venue Badges */}
-        <div className="flex flex-wrap justify-center gap-6 mt-6 max-w-3xl">
+        {/* Quick Date, Time and Venue Badges */}
+        <div className="flex flex-wrap justify-center gap-6 mt-6 max-w-4xl">
           <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
             <Calendar className="text-primary w-5 h-5" />
             <div className="text-left">
@@ -203,10 +205,17 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
+            <Clock className="text-primary w-5 h-5" />
+            <div className="text-left">
+              <p className="text-xs text-on-surface-variant">Camp Time & Mode</p>
+              <p className="text-sm font-bold">8:00 AM – 4:00 PM Daily (Non-Residential)</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
             <MapPin className="text-primary w-5 h-5" />
             <div className="text-left">
               <p className="text-xs text-on-surface-variant">Camp Venue</p>
-              <p className="text-sm font-bold">Al-Hikmat Nursery & Primary School, Agege, Lagos</p>
+              <p className="text-sm font-bold">Al-Hikmat Nursery & Primary School</p>
             </div>
           </div>
         </div>
@@ -238,8 +247,109 @@ export default function LandingPage() {
               The Muslim Students' Society of Nigeria (MSSN), Ikeja Area Council, is the premier student body coordinating Islamic activities and representing Muslim students across primary, secondary, and tertiary institutions, as well as school-leavers, within the Ikeja and Ojodu Local Government areas of Lagos State.
             </p>
             <p className="text-on-surface-variant leading-relaxed">
-              While the state-wide **Islamic Vacation Course (IVC)** is held in December, the **Holiday Training Course (HTC)** is Ikeja's localized, residential training camp. The HTC is designed specifically to utilize the school vacation period to protect students from negative societal influences by immersing them in a vibrant, supportive, and spiritually uplifting Islamic learning environment.
+              While the state-wide **Islamic Vacation Course (IVC)** is held in December, the **Holiday Training Course (HTC)** is Ikeja's localized, non-residential training program. The HTC is designed specifically to utilize the school vacation period to protect students from negative societal influences by immersing them in a vibrant, supportive, and spiritually uplifting Islamic learning environment.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Camp Details Section */}
+      <section id="details" className="py-20 bg-background border-t border-outline-variant">
+        <div className="max-w-container-max mx-auto px-6 md:px-10 w-full flex flex-col gap-12">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="text-xs font-bold text-primary tracking-widest uppercase mb-2 block">Program Overview</span>
+            <h3 className="text-3xl font-extrabold text-on-surface">HTC '26 Camp Information</h3>
+            <p className="text-on-surface-variant mt-2">
+              Everything you need to know about the upcoming Holiday Training Course session.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Card: Theme, Memory Lane & Skills */}
+            <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="p-3.5 bg-primary/10 text-primary rounded-2xl shrink-0">
+                  <Bookmark className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Official Theme</span>
+                  <h4 className="text-2xl font-extrabold text-primary mt-1">The Credible Maestro</h4>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="p-3.5 bg-accent/10 text-accent rounded-2xl shrink-0">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Memory Lane (Quran Verse)</span>
+                  <p className="text-base font-bold text-on-surface mt-1">Suratul Yusuf [Q 12 V 54-57]</p>
+                  <p className="text-xs text-on-surface-variant mt-1.5 italic">
+                    Focuses on competence, credibility, and leadership as exemplified by Prophet Yusuf (A.S.).
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-outline-variant pt-6">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-3">Vocational Skills Offered</span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Videography/Video editing",
+                    "Mobile graphics",
+                    "Crocheting",
+                    "Ankara crafts",
+                    "public speaking & creative writing"
+                  ].map((skill, index) => (
+                    <span key={index} className="px-3.5 py-1.5 bg-surface-container rounded-full text-xs font-semibold text-on-surface border border-outline-variant">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Card: Schedule, Venue & Fees */}
+            <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm justify-between">
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant text-primary shrink-0">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Dates & Time</span>
+                    <p className="text-sm font-bold text-on-surface">Sat. 25th – Mon. 27th July, 2026</p>
+                    <p className="text-xs text-on-surface-variant">8:00 AM – 4:00 PM Daily (Non-Residential)</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant text-primary shrink-0">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Venue</span>
+                    <p className="text-sm font-bold text-on-surface">Al-Hikmat Nursery & Primary School</p>
+                    <p className="text-xs text-on-surface-variant">Keke, Agege, Lagos State</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-outline-variant pt-6 flex flex-col gap-4">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">Camp Fees Structure</span>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant flex flex-col gap-1 text-center">
+                    <span className="text-xs text-on-surface-variant font-medium">Secondary / Leavers</span>
+                    <span className="text-2xl font-extrabold text-primary">₦4,000</span>
+                  </div>
+
+                  <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant flex flex-col gap-1 text-center">
+                    <span className="text-xs text-on-surface-variant font-medium">Undergraduates / Others</span>
+                    <span className="text-2xl font-extrabold text-primary">₦6,000</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
