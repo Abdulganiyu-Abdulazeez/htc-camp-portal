@@ -61,6 +61,7 @@ export interface Announcement {
   expiryDate?: string;
   status: "Published" | "Draft";
   createdAt: string;
+  attachments?: { name: string; url: string; type: "image" | "document" }[];
 }
 
 interface AppStateContextType {
@@ -84,8 +85,8 @@ interface AppStateContextType {
   updateSettings: (newSettings: Partial<CampSettings>) => void;
   addAdministrator: (fullName: string, email: string, role: "Super Admin" | "Registry") => Promise<void>;
   deleteAdministrator: (id: string) => Promise<void>;
-  publishAnnouncement: (title: string, category: Announcement["category"], content: string, expiryDate?: string) => Promise<void>;
-  saveAnnouncementDraft: (title: string, category: Announcement["category"], content: string, expiryDate?: string) => Promise<void>;
+  publishAnnouncement: (title: string, category: Announcement["category"], content: string, expiryDate?: string, attachments?: Announcement["attachments"]) => Promise<void>;
+  saveAnnouncementDraft: (title: string, category: Announcement["category"], content: string, expiryDate?: string, attachments?: Announcement["attachments"]) => Promise<void>;
   deleteAnnouncement: (id: string) => Promise<void>;
 }
 
@@ -814,7 +815,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     title: string,
     category: Announcement["category"],
     content: string,
-    expiryDate?: string
+    expiryDate?: string,
+    attachments?: Announcement["attachments"]
   ) => {
     const newAnnouncement: Announcement = {
       id: `ann_${Date.now()}`,
@@ -824,6 +826,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       expiryDate,
       status: "Published",
       createdAt: new Date().toISOString(),
+      attachments: attachments || [],
     };
 
     setAnnouncements((prev) => [newAnnouncement, ...prev]);
@@ -840,7 +843,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     title: string,
     category: Announcement["category"],
     content: string,
-    expiryDate?: string
+    expiryDate?: string,
+    attachments?: Announcement["attachments"]
   ) => {
     const newAnnouncement: Announcement = {
       id: `ann_${Date.now()}`,
@@ -850,6 +854,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       expiryDate,
       status: "Draft",
       createdAt: new Date().toISOString(),
+      attachments: attachments || [],
     };
 
     setAnnouncements((prev) => [newAnnouncement, ...prev]);

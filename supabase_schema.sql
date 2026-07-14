@@ -105,6 +105,7 @@ create table if not exists public.announcements (
   content text not null,
   "expiryDate" text,
   status text not null check (status in ('Published', 'Draft')),
+  attachments jsonb default '[]'::jsonb,
   "createdAt" timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -116,3 +117,6 @@ create policy "Allow public insert to announcements" on public.announcements for
 create policy "Allow public select of announcements" on public.announcements for select using (true);
 create policy "Allow public update of announcements" on public.announcements for update using (true);
 create policy "Allow public delete of announcements" on public.announcements for delete using (true);
+
+-- Migration statement to run in SQL Editor if table already exists:
+-- alter table public.announcements add column if not exists attachments jsonb default '[]'::jsonb;
