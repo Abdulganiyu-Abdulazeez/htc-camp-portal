@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase, hasSupabase } from "@/lib/supabase";
 
 export interface Delegate {
   id: string;
@@ -52,7 +53,7 @@ interface AppStateContextType {
   assignGroup: (delegateId: string, groupName: string, roomName: string) => void;
   autoGroupDelegates: () => void;
   sendBulkEmail: (subject: string, body: string, recipientIds: string[], onProgress: (progress: number) => void) => Promise<void>;
-  loginAsAdmin: (password: string) => boolean;
+  loginAsAdmin: (email: string, password: string) => boolean;
   logoutAdmin: () => void;
   loginAsDelegate: (identifier: string) => boolean; // identifier can be email or reference
   logoutDelegate: () => void;
@@ -234,79 +235,109 @@ const INITIAL_SETTINGS: CampSettings = {
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
 
 export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [delegates, setDelegates] = useState<Delegate[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("htc_delegates");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch (e) {
-          console.error(e);
-        }
+  const [delegates, setDelegates] = useState<Delegate[]>(INITIAL_DELEGATES);
+  const [settings, setSettings] = useState<CampSettings>(INITIAL_SETTINGS);
+  const [currentDelegate, setCurrentDelegate] = useState<Delegate | null>(null);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load initial state from sessionStorage on client side after mount
+  useEffect(() => {
+    const storedDelegates = sessionStorage.getItem("htc_delegates");
+    if (storedDelegates) {
+      try {
+        setDelegates(JSON.parse(storedDelegates));
+      } catch (e) {
+        console.error(e);
       }
     }
-    return INITIAL_DELEGATES;
-  });
 
-  const [settings, setSettings] = useState<CampSettings>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("htc_settings");
-      if (stored) {
+    const storedSettings = sessionStorage.getItem("htc_settings");
+    if (storedSettings) {
+      try {
+        const parsed = JSON.parse(storedSettings);
+        if (parsed.startDate === "2026-12-20" || parsed.endDate === "2026-12-27") {
+          parsed.startDate = "2026-07-25";
+          parsed.endDate = "2026-07-27";
+        }
+        setSettings(parsed);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const storedCurrentDelegate = sessionStorage.getItem("htc_current_delegate");
+    if (storedCurrentDelegate) {
+      try {
+        setCurrentDelegate(JSON.parse(storedCurrentDelegate));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const storedAdminLoggedIn = sessionStorage.getItem("htc_admin_logged_in");
+    if (storedAdminLoggedIn) {
+      setIsAdminLoggedIn(storedAdminLoggedIn === "true");
+    }
+
+    setIsLoaded(true);
+
+    // Fetch fresh data from Supabase in the background if configured
+    if (hasSupabase) {
+      const syncData = async () => {
         try {
-          const parsed = JSON.parse(stored);
-          if (parsed.startDate === "2026-12-20" || parsed.endDate === "2026-12-27") {
-            parsed.startDate = "2026-07-25";
-            parsed.endDate = "2026-07-27";
+          // Fetch settings
+          const { data: settingsData, error: settingsError } = await supabase
+            .from("settings")
+            .select("*")
+            .eq("id", 1)
+            .single();
+
+          if (!settingsError && settingsData) {
+            setSettings(settingsData);
           }
-          return parsed;
-        } catch (e) {
-          console.error(e);
+
+          // Fetch delegates
+          const { data: delegatesData, error: delegatesError } = await supabase
+            .from("delegates")
+            .select("*")
+            .order("createdAt", { ascending: false });
+
+          if (!delegatesError && delegatesData) {
+            setDelegates(delegatesData);
+          }
+        } catch (err) {
+          console.error("Failed to sync from Supabase on mount:", err);
         }
-      }
+      };
+      syncData();
     }
-    return INITIAL_SETTINGS;
-  });
+  }, []);
 
-  const [currentDelegate, setCurrentDelegate] = useState<Delegate | null>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("htc_current_delegate");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-    return null;
-  });
-
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("htc_admin_logged_in") === "true";
-    }
-    return false;
-  });
+  // Save to sessionStorage only after the client-side state has been initialized/loaded
+  useEffect(() => {
+    if (!isLoaded) return;
+    sessionStorage.setItem("htc_delegates", JSON.stringify(delegates));
+  }, [delegates, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem("htc_delegates", JSON.stringify(delegates));
-  }, [delegates]);
+    if (!isLoaded) return;
+    sessionStorage.setItem("htc_settings", JSON.stringify(settings));
+  }, [settings, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem("htc_settings", JSON.stringify(settings));
-  }, [settings]);
-
-  useEffect(() => {
+    if (!isLoaded) return;
     if (currentDelegate) {
-      localStorage.setItem("htc_current_delegate", JSON.stringify(currentDelegate));
+      sessionStorage.setItem("htc_current_delegate", JSON.stringify(currentDelegate));
     } else {
-      localStorage.removeItem("htc_current_delegate");
+      sessionStorage.removeItem("htc_current_delegate");
     }
-  }, [currentDelegate]);
+  }, [currentDelegate, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem("htc_admin_logged_in", String(isAdminLoggedIn));
-  }, [isAdminLoggedIn]);
+    if (!isLoaded) return;
+    sessionStorage.setItem("htc_admin_logged_in", String(isAdminLoggedIn));
+  }, [isAdminLoggedIn, isLoaded]);
 
   const registerDelegate = (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => {
     const timestamp = Date.now();
@@ -321,11 +352,29 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       createdAt: new Date().toISOString(),
     };
 
+    // Update local state (optimistic UI & sessionStorage update)
     setDelegates((prev) => [newDelegate, ...prev]);
+
+    // Async write to Supabase
+    if (hasSupabase) {
+      supabase
+        .from("delegates")
+        .insert([newDelegate])
+        .then(({ error }) => {
+          if (error) {
+            console.error("Failed to sync registered delegate to Supabase:", error);
+          } else {
+            console.log("Successfully synced registered delegate to Supabase.");
+          }
+        });
+    }
+
     return newDelegate;
   };
 
   const confirmPayment = (reference: string) => {
+    let updatedDelegate: Delegate | null = null;
+
     setDelegates((prev) =>
       prev.map((d) => {
         if (d.reference === reference && d.paymentStatus === "pending") {
@@ -354,6 +403,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             assignedGroup,
             assignedRoom,
           };
+
+          updatedDelegate = updated;
           
           if (currentDelegate && currentDelegate.reference === reference) {
             setCurrentDelegate(updated);
@@ -363,6 +414,27 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return d;
       })
     );
+
+    // Async write to Supabase
+    if (hasSupabase && updatedDelegate) {
+      const { id, paymentStatus, assignedGroup, assignedRoom } = updatedDelegate;
+      supabase
+        .from("delegates")
+        .update({
+          id,
+          paymentStatus,
+          assignedGroup,
+          assignedRoom
+        })
+        .eq("reference", reference)
+        .then(({ error }) => {
+          if (error) {
+            console.error(`Failed to sync payment confirmation to Supabase for reference ${reference}:`, error);
+          } else {
+            console.log(`Successfully synced payment confirmation to Supabase for reference ${reference}.`);
+          }
+        });
+    }
   };
 
   const overridePayment = (reference: string) => {
@@ -370,6 +442,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const assignGroup = (delegateId: string, groupName: string, roomName: string) => {
+    let updatedDelegate: Delegate | null = null;
+
     setDelegates((prev) =>
       prev.map((d) => {
         if (d.id === delegateId) {
@@ -378,6 +452,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             assignedGroup: groupName,
             assignedRoom: roomName,
           };
+          updatedDelegate = updated;
           if (currentDelegate && currentDelegate.id === delegateId) {
             setCurrentDelegate(updated);
           }
@@ -386,11 +461,31 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return d;
       })
     );
+
+    // Async write to Supabase
+    if (hasSupabase && updatedDelegate) {
+      supabase
+        .from("delegates")
+        .update({
+          assignedGroup: groupName,
+          assignedRoom: roomName
+        })
+        .eq("id", delegateId)
+        .then(({ error }) => {
+          if (error) {
+            console.error(`Failed to sync group assignment to Supabase for delegate ${delegateId}:`, error);
+          } else {
+            console.log(`Successfully synced group assignment to Supabase for delegate ${delegateId}.`);
+          }
+        });
+    }
   };
 
   const autoGroupDelegates = () => {
-    setDelegates((prev) =>
-      prev.map((d) => {
+    const updatedDelegatesList: Delegate[] = [];
+
+    setDelegates((prev) => {
+      const updated = prev.map((d) => {
         if (d.paymentStatus === "verified" && d.assignedGroup === "None") {
           let assignedGroup = "None";
           let assignedRoom = "None";
@@ -403,20 +498,49 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             assignedRoom = `Room ${Math.floor(Math.random() * 5) + 1}`;
           }
 
-          const updated = {
+          const updatedDel = {
             ...d,
             assignedGroup,
             assignedRoom,
           };
-
-          if (currentDelegate && currentDelegate.id === d.id) {
-            setCurrentDelegate(updated);
-          }
-          return updated;
+          updatedDelegatesList.push(updatedDel);
+          return updatedDel;
         }
         return d;
-      })
-    );
+      });
+
+      // Update current delegate if their assignment changed
+      if (currentDelegate && currentDelegate.paymentStatus === "verified" && currentDelegate.assignedGroup === "None") {
+        const found = updated.find(x => x.id === currentDelegate.id);
+        if (found) {
+          setCurrentDelegate(found);
+        }
+      }
+
+      return updated;
+    });
+
+    // Async write to Supabase
+    if (hasSupabase && updatedDelegatesList.length > 0) {
+      const updates = updatedDelegatesList.map((d) =>
+        supabase
+          .from("delegates")
+          .update({
+            assignedGroup: d.assignedGroup,
+            assignedRoom: d.assignedRoom
+          })
+          .eq("id", d.id)
+      );
+
+      Promise.all(updates).then((results) => {
+        const errors = results.filter((r) => r.error);
+        if (errors.length > 0) {
+          console.error("Some automatic group assignments failed to sync to Supabase:", errors);
+        } else {
+          console.log("All automatic group assignments synced to Supabase successfully.");
+        }
+      });
+    }
   };
 
   const sendBulkEmail = (
@@ -446,8 +570,10 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
-  const loginAsAdmin = (password: string) => {
-    if (password === "admin123" || password === "htc2026") {
+  const loginAsAdmin = (email: string, password: string) => {
+    const validEmail = email.trim().toLowerCase() === "admin@ikeja-area.org" || email.trim().toLowerCase() === "admin@example.com";
+    const validPassword = password === "admin123" || password === "htc2026";
+    if (validEmail && validPassword) {
       setIsAdminLoggedIn(true);
       return true;
     }
@@ -477,7 +603,26 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateSettings = (newSettings: Partial<CampSettings>) => {
-    setSettings((prev) => ({ ...prev, ...newSettings }));
+    let finalSettings: CampSettings | null = null;
+    setSettings((prev) => {
+      const updated = { ...prev, ...newSettings };
+      finalSettings = updated;
+      return updated;
+    });
+
+    if (hasSupabase && finalSettings) {
+      supabase
+        .from("settings")
+        .update(newSettings)
+        .eq("id", 1)
+        .then(({ error }) => {
+          if (error) {
+            console.error("Failed to sync settings updates to Supabase:", error);
+          } else {
+            console.log("Successfully synced settings updates to Supabase.");
+          }
+        });
+    }
   };
 
   return (
