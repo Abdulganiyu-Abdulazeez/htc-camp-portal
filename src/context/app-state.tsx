@@ -774,6 +774,10 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           amount: fee,
           category: delegate.category,
           group: delegate.assignedGroup,
+          delegateId: delegate.id,
+          houseName: delegate.assignedGroup,
+          delegateEmail: delegate.email,
+          delegateName: delegate.fullName,
         }),
       })
         .then(async (res) => {
