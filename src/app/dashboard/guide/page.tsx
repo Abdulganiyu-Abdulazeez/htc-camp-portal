@@ -25,10 +25,9 @@ export default function DelegateGuidePage() {
           <ul className="text-xs text-on-surface-variant flex flex-col gap-2.5 list-disc pl-4 leading-relaxed">
             <li>Copy of your Digital Ticket Badge (Printout or phone screenshot).</li>
             <li>Quran, study notebook, and writing utensils.</li>
-            <li>Bedding (pillow, bedsheets, light blanket).</li>
             <li>Appropriate modest clothing (Jalabs/Hijabs/modest wear for females, white/decent outfits for males).</li>
             <li>Toiletries, slippers, and personal medications.</li>
-            <li>Flashlight and a mosquito net.</li>
+            <li>Water bottle and personal hand sanitizer.</li>
           </ul>
         </div>
 
@@ -38,8 +37,8 @@ export default function DelegateGuidePage() {
             Camp Medical Rules
           </h4>
           <ul className="text-xs text-on-surface-variant flex flex-col gap-2.5 list-disc pl-4 leading-relaxed">
-            <li>All prescription medications must be declared to the camp clinic upon check-in.</li>
-            <li>Strictly no self-medicating is allowed inside the hostel rooms.</li>
+            <li>All prescription medications must be declared to the camp medical unit upon arrival.</li>
+            <li>Strictly no self-medicating is allowed. Report to the medical team if you feel unwell.</li>
             <li>If you have asthma, always carry your inhaler at all times.</li>
             <li>Report any symptoms of illness to your group supervisor immediately.</li>
             <li>Ensure you declare any allergies in the registration form.</li>

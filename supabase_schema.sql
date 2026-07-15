@@ -51,6 +51,8 @@ create policy "Allow public delete of delegates" on public.delegates
 create table if not exists public.settings (
   id integer primary key default 1 check (id = 1),
   "campFee" numeric not null default 6000,
+  "campFeeSecondary" numeric not null default 4000,
+  "campFeeUndergrad" numeric not null default 6000,
   "capacityLimit" integer not null default 500,
   "startDate" text not null default '2026-07-25',
   "endDate" text not null default '2026-07-27',
@@ -58,8 +60,8 @@ create table if not exists public.settings (
 );
 
 -- Insert initial settings row if not exists
-insert into public.settings (id, "campFee", "capacityLimit", "startDate", "endDate", "autoGroupingEnabled")
-values (1, 6000, 500, '2026-07-25', '2026-07-27', true)
+insert into public.settings (id, "campFee", "campFeeSecondary", "campFeeUndergrad", "capacityLimit", "startDate", "endDate", "autoGroupingEnabled")
+values (1, 6000, 4000, 6000, 500, '2026-07-25', '2026-07-27', true)
 on conflict (id) do nothing;
 
 -- Enable RLS for settings
@@ -92,9 +94,14 @@ create policy "Allow public select of administrators" on public.administrators f
 create policy "Allow public update of administrators" on public.administrators for update using (true);
 create policy "Allow public delete of administrators" on public.administrators for delete using (true);
 
--- Insert initial administrators row if not exists
-insert into public.administrators (id, "fullName", email, role, status, "lastLogin")
-values ('admin_1', 'Usman Farooq', 'admin@example.com', 'Super Admin', 'Active', '2026-07-14T03:22:28Z')
+
+
+insert into public.administrators (id, "fullName", email, role, status)
+values ('admin_abdulganiyu', 'Abdulganiyu Abdulazeez', 'abdulganiyuabdulazeez20@gmail.com', 'Super Admin', 'Active')
+on conflict (id) do nothing;
+
+insert into public.administrators (id, "fullName", email, role, status)
+values ('admin_fazazi', 'Fazazi Abdulbasit', 'fazaziishola@gmail.com', 'Super Admin', 'Active')
 on conflict (id) do nothing;
 
 -- Create announcements table

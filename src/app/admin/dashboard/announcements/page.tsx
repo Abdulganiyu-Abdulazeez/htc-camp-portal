@@ -15,6 +15,7 @@ import {
   Paperclip,
   Download,
 } from "lucide-react";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 const CATEGORY_OPTIONS = [
   { value: "Logistics", label: "Logistics" },
@@ -33,6 +34,7 @@ export default function AdminAnnouncementsPage() {
   const [attachments, setAttachments] = useState<Required<Announcement>["attachments"]>([]);
   const [statusMsg, setStatusMsg] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,6 +98,7 @@ export default function AdminAnnouncementsPage() {
     setExpiryDate("");
     setCategory("Logistics");
     setAttachments([]);
+    setActiveTab("write");
     setTimeout(() => setStatusMsg(""), 2000);
   };
 
@@ -113,6 +116,7 @@ export default function AdminAnnouncementsPage() {
     setExpiryDate("");
     setCategory("Logistics");
     setAttachments([]);
+    setActiveTab("write");
     setTimeout(() => setStatusMsg(""), 2000);
   };
 
@@ -176,21 +180,60 @@ export default function AdminAnnouncementsPage() {
 
               {/* Message Content */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-on-surface-variant">Message Content</label>
-                <div className="border border-outline-variant rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-4 focus-within:ring-accent/10 transition-all">
-                  <div className="bg-surface-container-high border-b border-outline-variant p-2 flex gap-1 flex-wrap">
-                    <button type="button" className="p-1.5 hover:bg-surface-container rounded text-xs font-bold text-on-surface-variant" onClick={() => setContent((c) => c + " **bold** ")}>B</button>
-                    <button type="button" className="p-1.5 hover:bg-surface-container rounded text-xs italic text-on-surface-variant" onClick={() => setContent((c) => c + " *italic* ")}>I</button>
-                    <button type="button" className="p-1.5 hover:bg-surface-container rounded text-xs text-on-surface-variant" onClick={() => setContent((c) => c + " - bullet ")}>- List</button>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-on-surface-variant">Message Content</label>
+                  <div className="flex bg-surface-container border border-outline-variant rounded-lg p-0.5 text-[10px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("write")}
+                      className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                        activeTab === "write"
+                          ? "bg-primary text-white shadow-sm"
+                          : "text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      Write
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("preview")}
+                      className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                        activeTab === "preview"
+                          ? "bg-primary text-white shadow-sm"
+                          : "text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      Preview
+                    </button>
                   </div>
-                  <textarea
-                    rows={6}
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Type your announcement details here..."
-                    className="w-full p-4 focus:outline-none resize-none bg-surface-container-low text-xs border-none"
-                    required
-                  />
+                </div>
+
+                <div className="border border-outline-variant rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-4 focus-within:ring-accent/10 transition-all">
+                  {activeTab === "write" ? (
+                    <>
+                      <div className="bg-surface-container-high border-b border-outline-variant p-2 flex gap-1 flex-wrap">
+                        <button type="button" className="p-1.5 cursor-pointer bg-surface-container rounded-xl text-[10px] font-bold text-on-surface-variant hover:bg-surface-container-highest transition-colors" onClick={() => setContent((c) => c + " **bold** ")}>B</button>
+                        <button type="button" className="p-1.5 cursor-pointer bg-surface-container rounded-xl text-[10px] italic text-on-surface-variant hover:bg-surface-container-highest transition-colors" onClick={() => setContent((c) => c + " _italic_ ")}>I</button>
+                        <button type="button" className="p-1.5 cursor-pointer bg-surface-container rounded-xl text-[10px] text-on-surface-variant hover:bg-surface-container-highest transition-colors" onClick={() => setContent((c) => c + " - item ")}>- List</button>
+                      </div>
+                      <textarea
+                        rows={6}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="Type your announcement details here... (Supports Markdown: **bold**, _italic_, - lists)"
+                        className="w-full p-4 focus:outline-none resize-none bg-surface-container-low text-xs border-none"
+                        required
+                      />
+                    </>
+                  ) : (
+                    <div className="w-full p-4 bg-surface-container-low min-h-[188px] text-xs overflow-y-auto max-h-[300px]">
+                      {content.trim() ? (
+                        <MarkdownRenderer text={content} className="text-on-surface" />
+                      ) : (
+                        <p className="text-on-surface-variant/60 italic">Nothing to preview. Start writing in the Write tab!</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -326,9 +369,9 @@ export default function AdminAnnouncementsPage() {
                       <p className="text-[10px] text-primary font-bold tracking-wider mt-0.5">{ann.category}</p>
                     </div>
 
-                    <p className="text-[11px] text-on-surface-variant leading-relaxed line-clamp-3">
-                      {ann.content}
-                    </p>
+                    <div className="text-[11px] text-on-surface-variant leading-relaxed line-clamp-3">
+                      <MarkdownRenderer text={ann.content} />
+                    </div>
 
                     {/* Display Stored Attachments */}
                     {ann.attachments && ann.attachments.length > 0 && (

@@ -21,7 +21,7 @@ import {
 export default function DelegateDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
-  const { delegates, overridePayment, assignGroup } = useAppState();
+  const { delegates, overridePayment, assignGroup, settings } = useAppState();
 
   const [paystackLookupRef, setPaystackLookupRef] = useState("");
   const [paystackFound, setPaystackFound] = useState<boolean | null>(null);
@@ -64,14 +64,10 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
   };
 
   const handleGroupSelect = (groupName: string) => {
-    let roomName = "None";
-    if (groupName !== "None") {
-      roomName = `Room ${Math.floor(Math.random() * 5) + 1}`;
-    }
-    assignGroup(delegate.id, groupName, roomName);
+    assignGroup(delegate.id, groupName, "None");
   };
 
-  const totalFee = getDelegateFee(delegate.category, delegate.yearOfStudy);
+  const totalFee = getDelegateFee(delegate.category, delegate.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad);
 
   return (
     <div className="flex flex-col gap-6 flex-1 max-w-5xl mx-auto pb-12">
@@ -118,7 +114,7 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
               ? "bg-success/15 text-success border-success/20"
               : "bg-error/15 text-error border-error/20"
           }`}>
-            {delegate.paymentStatus === "verified" ? "Payment Confirmed" : "Verification Pending"}
+            {delegate.paymentStatus === "verified" ? "Paid" : "Pending"}
           </span>
         </div>
         
@@ -274,7 +270,7 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
           <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 shadow-sm flex flex-col gap-4">
             <h4 className="font-bold text-sm text-primary flex items-center gap-2 border-b border-outline-variant/30 pb-3">
               <MapPin className="w-4 h-4 text-primary" />
-              Room & Group Allocation
+              Group Allocation
             </h4>
             
             <div className="flex flex-col gap-3 text-xs">
@@ -287,10 +283,14 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
                     className="w-full px-3 py-2 bg-surface-container border border-outline-variant rounded-lg text-xs focus:outline-none cursor-pointer mt-1"
                   >
                     <option value="None">None</option>
-                    <option value="Abu Bakr">Abu Bakr (Male Undergrads)</option>
-                    <option value="Umar">Umar (Male Students)</option>
-                    <option value="Aisha">Aisha (Female Undergrads)</option>
-                    <option value="Khadijah">Khadijah (Female Students)</option>
+                    <option value="Abu Bakr">Abu Bakr (Male)</option>
+                    <option value="Umar">Umar (Male)</option>
+                    <option value="Uthman">Uthman (Male)</option>
+                    <option value="Ali">Ali (Male)</option>
+                    <option value="Aisha">Aisha (Female)</option>
+                    <option value="Khadijah">Khadijah (Female)</option>
+                    <option value="Fatimah">Fatimah (Female)</option>
+                    <option value="Zaynab">Zaynab (Female)</option>
                   </select>
                 ) : (
                   <span className="font-semibold text-on-surface-variant bg-surface-container-high p-2 rounded border border-outline-variant mt-1 block">
@@ -298,13 +298,6 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
                   </span>
                 )}
               </div>
-
-              {delegate.assignedRoom !== "None" && (
-                <div className="flex justify-between items-center bg-indigo-50 border border-indigo-200 text-indigo-700 p-3 rounded-xl font-bold mt-1">
-                  <span>Assigned Camp Room</span>
-                  <span>{delegate.assignedRoom}</span>
-                </div>
-              )}
             </div>
           </div>
 

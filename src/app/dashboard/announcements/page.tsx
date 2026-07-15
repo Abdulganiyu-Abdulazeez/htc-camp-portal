@@ -3,6 +3,7 @@
 import React from "react";
 import { useAppState } from "@/context/app-state";
 import { Paperclip, Image as ImageIcon, FileText, Download } from "lucide-react";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 export default function DelegateAnnouncementsPage() {
   const { currentDelegate, announcements } = useAppState();
@@ -61,9 +62,9 @@ export default function DelegateAnnouncementsPage() {
                   </span>
                 </div>
                 
-                <p className="text-xs text-on-surface-variant leading-relaxed whitespace-pre-wrap">
-                  {ann.content}
-                </p>
+                <div className="text-xs text-on-surface-variant leading-relaxed">
+                  <MarkdownRenderer text={ann.content} />
+                </div>
 
                 {/* Stored Image Attachments Grid */}
                 {images.length > 0 && (

@@ -25,52 +25,8 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
-  const router = useRouter();
-  const { delegates, loginAsDelegate, settings, loginAsAdmin } = useAppState();
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [identifier, setIdentifier] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const { delegates, settings } = useAppState();
   const [activeNav, setActiveNav] = useState("home");
-  const [isAdminPasswordMode, setIsAdminPasswordMode] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-
-  const handleCheckStatus = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!identifier.trim()) {
-      setErrorMsg("Please enter your email or reference ID.");
-      return;
-    }
-    
-    const trimmedInput = identifier.trim().toLowerCase();
-    if (trimmedInput === "fazaziishola@gmail.com" || trimmedInput === "abdulganiyuabdulazeez20@gmail.com") {
-      setIsAdminPasswordMode(true);
-      setErrorMsg("");
-      return;
-    }
-
-    const success = loginAsDelegate(identifier);
-    if (success) {
-      router.push("/dashboard");
-    } else {
-      setErrorMsg("No registration found with this email or reference ID.");
-    }
-  };
-
-  const handleAdminPasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminPassword.trim()) {
-      setErrorMsg("Please enter your password.");
-      return;
-    }
-    if (adminPassword === "HtcAdminPortal'26") {
-      const success = loginAsAdmin("admin@example.com", "htc2026");
-      if (success) {
-        router.push("/admin/dashboard");
-        return;
-      }
-    }
-    setErrorMsg("Incorrect admin password.");
-  };
 
   // Calculate live stats
   const totalVerified = delegates.filter((d) => d.paymentStatus === "verified").length;
@@ -180,62 +136,72 @@ export default function LandingPage() {
           </a>
         </nav>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowStatusModal(true)}
-            className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary-container/10 transition-colors"
+          <Link
+            href="/login"
+            className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary-container/10 transition-colors flex items-center justify-center"
           >
             Login
-          </button>
+          </Link>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative py-20 px-6 max-w-container-max mx-auto w-full flex flex-col items-center text-center gap-8">
-        <h2 className="w-full text-4xl md:text-6xl font-extrabold text-on-surface leading-tight tracking-tight">
-          Holiday Training Course (HTC '26) <br />
-          <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">The Credible Maestro</span>
-        </h2>
-        <p className="text-lg text-on-surface-variant max-w-3xl leading-relaxed">
-          The MSSN Ikeja Area Council Holiday Training Course (HTC '26) is your chance to master a practical craft alongside driven peers and become The Credible Maestro you were meant to be.
-        </p>
+      <section 
+        id="hero" 
+        className="relative py-24 md:py-32 px-6 w-full flex flex-col items-center text-center gap-8 bg-cover bg-center overflow-hidden"
+        style={{ backgroundImage: "url('/IMG_3380.WEBP')" }}
+      >
+        {/* Deep dark gradient overlay to ensure text contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/75 to-slate-950/85 z-0" />
+        
+        {/* Relative content container */}
+        <div className="relative z-10 max-w-4xl mx-auto w-full flex flex-col items-center gap-8 text-white">
+          <h2 className="w-full text-4xl md:text-6xl font-extrabold leading-tight tracking-tight text-white">
+            Holiday Training Course (HTC '26) <br />
+            <span className="text-primary bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">The Credible Maestro</span>
+          </h2>
+          <p className="text-lg text-slate-200 max-w-3xl leading-relaxed">
+            The MSSN Ikeja Area Council Holiday Training Course (HTC '26) is your chance to master a practical craft alongside driven peers and become The Credible Maestro you were meant to be.
+          </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
-          <Link
-            href="/register"
-            className="px-8 py-4 bg-primary text-white text-base font-bold rounded-lg hover:bg-primary/95 transition-all shadow-lg hover:shadow-primary/20 hover:scale-105 active:scale-95 animate-bounce-subtle flex items-center justify-center gap-2"
-          >
-            Register for HTC
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <button
-            onClick={() => setShowStatusModal(true)}
-            className="px-8 py-4 border border-outline text-on-surface-variant text-base font-bold rounded-lg hover:bg-surface-container/50 transition-all flex items-center justify-center gap-2"
-          >
-            Login
-          </button>
-        </div>
+          <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
+            <Link
+              href="/register"
+              className="px-8 py-4 bg-primary text-white text-base font-bold rounded-lg hover:bg-primary/95 transition-all shadow-lg hover:shadow-primary/20 hover:scale-105 active:scale-95 animate-bounce-subtle flex items-center justify-center gap-2"
+            >
+              Register for HTC
+              <ArrowRight className="w-4 h-4 text-white" />
+            </Link>
+            <Link
+              href="/login"
+              className="px-8 py-4 border border-white/20 text-white hover:bg-white/10 text-base font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+            >
+              Login
+            </Link>
+          </div>
 
-        {/* Quick Date, Time and Venue Badges */}
-        <div className="flex flex-wrap justify-center gap-6 mt-6 max-w-4xl">
-          <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
-            <Calendar className="text-primary w-5 h-5" />
-            <div className="text-left">
-              <p className="text-xs text-on-surface-variant">Camp Dates</p>
-              <p className="text-sm font-bold">{formatDateRange()}</p>
+          {/* Quick Date, Time and Venue Badges */}
+          <div className="flex flex-wrap justify-center gap-6 mt-6 max-w-4xl w-full">
+            <div className="flex items-center gap-3 px-5 py-3 bg-white/10 border border-white/10 rounded-xl backdrop-blur-md">
+              <Calendar className="text-primary w-5 h-5" />
+              <div className="text-left">
+                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Camp Dates</p>
+                <p className="text-sm font-bold text-white">{formatDateRange()}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
-            <Clock className="text-primary w-5 h-5" />
-            <div className="text-left">
-              <p className="text-xs text-on-surface-variant">Camp Time & Mode</p>
-              <p className="text-sm font-bold">8:00 AM – 4:00 PM Daily (Non-Residential)</p>
+            <div className="flex items-center gap-3 px-5 py-3 bg-white/10 border border-white/10 rounded-xl backdrop-blur-md">
+              <Clock className="text-primary w-5 h-5" />
+              <div className="text-left">
+                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Camp Time & Mode</p>
+                <p className="text-sm font-bold text-white">8:00 AM – 4:00 PM Daily (Non-Res)</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 px-5 py-3 bg-surface-container rounded-xl border border-outline-variant">
-            <MapPin className="text-primary w-5 h-5" />
-            <div className="text-left">
-              <p className="text-xs text-on-surface-variant">Camp Venue</p>
-              <p className="text-sm font-bold">Al-Hikmat Nursery & Primary School</p>
+            <div className="flex items-center gap-3 px-5 py-3 bg-white/10 border border-white/10 rounded-xl backdrop-blur-md">
+              <MapPin className="text-primary w-5 h-5" />
+              <div className="text-left">
+                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Camp Venue</p>
+                <p className="text-sm font-bold text-white">Al-Hikmat Nursery & Primary</p>
+              </div>
             </div>
           </div>
         </div>
@@ -244,18 +210,19 @@ export default function LandingPage() {
       {/* About Section */}
       <section id="about" className="py-20 bg-surface-container-low border-t border-outline-variant">
         <div className="max-w-container-max mx-auto px-6 md:px-10 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="relative rounded-3xl overflow-hidden shadow-xl aspect-video bg-gradient-to-tr from-primary to-accent flex items-center justify-center p-8 text-center text-white">
-            <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
-            <div className="relative flex flex-col items-center gap-4">
-              <img
-                src="/mss-ikeja-logo.png"
-                alt="MSSN Ikeja Logo"
-                className="w-24 h-24 object-contain filter drop-shadow-md animate-pulse"
-              />
-              <h4 className="text-xl font-extrabold uppercase tracking-wider">MSSN Ikeja Area Council</h4>
-              <p className="text-xs font-semibold max-w-md italic opacity-90">
-                "La ilaha illallah Muhammadur-Rasuulul Allah"
-              </p>
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-video bg-slate-900 group">
+            <img
+              src="/IMG_3381.WEBP"
+              alt="MSSN Encampment Vacation"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+            {/* Soft dark gradient overlay for depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+            
+            {/* Small floating badge */}
+            <div className="absolute bottom-4 left-4 bg-primary/90 text-white backdrop-blur-sm px-3.5 py-1.5 rounded-xl text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-lg border border-white/10 select-none">
+              <Users className="w-3.5 h-3.5" />
+              Encampment Experience
             </div>
           </div>
           <div className="flex flex-col gap-6">
@@ -509,116 +476,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Status Lookup Modal */}
-      {showStatusModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
-            <button
-              onClick={() => {
-                setShowStatusModal(false);
-                setErrorMsg("");
-                setIdentifier("");
-                setIsAdminPasswordMode(false);
-                setAdminPassword("");
-              }}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface"
-            >
-              <X className="w-5 h-5" />
-            </button>
 
-            {!isAdminPasswordMode ? (
-              <>
-                <h4 className="text-xl font-bold text-primary mb-3">Login / Check Status</h4>
-                <p className="text-sm text-on-surface-variant mb-6">
-                  Enter the Email address or Payment Reference ID (`REF-XXXXXXXX`) you used during registration to access your digital badge and details.
-                </p>
-
-                <form onSubmit={handleCheckStatus} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-on-surface-variant">Email / Reference ID</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. abdullah@example.com or REF-1720894562"
-                      value={identifier}
-                      onChange={(e) => {
-                        setIdentifier(e.target.value);
-                        setErrorMsg("");
-                      }}
-                      className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
-                    />
-                  </div>
-
-                  {errorMsg && (
-                    <p className="text-xs text-error font-medium flex items-center gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {errorMsg}
-                    </p>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
-                  >
-                    Access Dashboard
-                    <LogIn className="w-4 h-4" />
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <h4 className="text-xl font-bold text-primary mb-3">Admin Portal Login</h4>
-                <p className="text-sm text-on-surface-variant mb-6">
-                  Please enter your administrator password for account <strong className="text-primary">{identifier}</strong>.
-                </p>
-
-                <form onSubmit={handleAdminPasswordSubmit} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-on-surface-variant">Admin Password</label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      value={adminPassword}
-                      onChange={(e) => {
-                        setAdminPassword(e.target.value);
-                        setErrorMsg("");
-                      }}
-                      className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-4 focus:ring-accent/20 transition-all text-sm"
-                    />
-                  </div>
-
-                  {errorMsg && (
-                    <p className="text-xs text-error font-medium flex items-center gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {errorMsg}
-                    </p>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAdminPasswordMode(false);
-                        setAdminPassword("");
-                        setErrorMsg("");
-                      }}
-                      className="flex-1 py-3 border border-outline text-on-surface-variant font-bold rounded-lg hover:bg-surface-container/50 transition-all text-sm"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
-                    >
-                      Verify & Login
-                      <LogIn className="w-4 h-4" />
-                    </button>
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <footer className="mt-auto py-10 bg-surface-container-lowest border-t border-outline-variant px-6 md:px-10 text-center">

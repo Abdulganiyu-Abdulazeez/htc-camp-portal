@@ -31,7 +31,7 @@ export default function DelegateDashboardPage() {
               ? "bg-success/15 text-success border border-success/30"
               : "bg-error/15 text-error border border-error/30"
           }`}>
-            {currentDelegate.paymentStatus === "verified" ? "Verified" : "Payment Pending"}
+            {currentDelegate.paymentStatus === "verified" ? "Paid" : "Pending Verification"}
           </span>
         </div>
       </div>
@@ -94,14 +94,14 @@ export default function DelegateDashboardPage() {
         <div className="lg:col-span-3 flex flex-col gap-6">
           {/* Allocation Panel */}
           <div className="bg-surface-container-low border border-outline-variant p-6 rounded-2xl flex flex-col gap-4 shadow-sm">
-            <h4 className="font-bold text-base">Room & Group Allocation</h4>
+            <h4 className="font-bold text-base">Group Allocation</h4>
             {currentDelegate.paymentStatus === "pending" ? (
               <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl flex gap-3 items-start">
                 <AlertCircle className="w-5 h-5 mt-0.5 shrink-0 animate-pulse" />
                 <div>
                   <p className="text-xs font-bold">Payment Verification Pending</p>
                   <p className="text-xs text-error-red mt-1">
-                    Please complete your fee payment or wait for administrator manual verification. Allocations are only done for verified registrations.
+                    Please complete your fee payment or wait for administrator manual verification. Group assignments are only done for verified registrations.
                   </p>
                 </div>
               </div>
@@ -111,20 +111,16 @@ export default function DelegateDashboardPage() {
                 <div>
                   <p className="text-xs font-bold">Allocation Processing</p>
                   <p className="text-xs text-on-surface-variant mt-1">
-                    Your payment is verified! The administrative team is currently organizing groups. You will receive a notification and your room number here soon.
+                    Your payment is verified! The administrative team is currently organizing groups. You will receive a notification and your group assignment here soon.
                   </p>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="bg-surface-container-high p-4 rounded-xl border border-outline-variant flex flex-col gap-1">
                     <span className="text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">Assigned Group</span>
                     <span className="text-lg font-extrabold text-primary">Group {currentDelegate.assignedGroup}</span>
-                  </div>
-                  <div className="bg-surface-container-high p-4 rounded-xl border border-outline-variant flex flex-col gap-1">
-                    <span className="text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">Allocated Room</span>
-                    <span className="text-lg font-extrabold text-primary">{currentDelegate.assignedRoom}</span>
                   </div>
                 </div>
                 
@@ -133,7 +129,7 @@ export default function DelegateDashboardPage() {
                   <div className="text-xs">
                     <p className="font-bold">Camp Attendance Approved</p>
                     <p className="text-on-surface-variant mt-1">
-                      You are fully registered for the Holiday Training Course! Please proceed to <strong>{currentDelegate.assignedRoom}</strong> at the venue upon arrival. Report to your supervisor for Group {currentDelegate.assignedGroup} induction.
+                      You are fully registered for the Holiday Training Course! Please report to your supervisor for Group {currentDelegate.assignedGroup} induction upon arrival at the venue.
                     </p>
                   </div>
                 </div>

@@ -31,7 +31,7 @@ const CATEGORY_FILTER_OPTIONS = [
 
 const PAYMENT_FILTER_OPTIONS = [
   { value: "All", label: "All" },
-  { value: "Verified", label: "Verified" },
+  { value: "Verified", label: "Paid" },
   { value: "Pending", label: "Pending" },
 ];
 
@@ -39,8 +39,12 @@ const GROUP_OPTIONS = [
   { value: "None", label: "None" },
   { value: "Abu Bakr", label: "Abu Bakr" },
   { value: "Umar", label: "Umar" },
+  { value: "Uthman", label: "Uthman" },
+  { value: "Ali", label: "Ali" },
   { value: "Aisha", label: "Aisha" },
   { value: "Khadijah", label: "Khadijah" },
+  { value: "Fatimah", label: "Fatimah" },
+  { value: "Zaynab", label: "Zaynab" },
 ];
 
 export default function AdminOperationsPage() {
@@ -110,28 +114,70 @@ export default function AdminOperationsPage() {
 
   // Inline group assignment handler
   const handleInlineGroupChange = (delegateId: string, groupName: string) => {
-    let roomName = "None";
-    if (groupName !== "None") {
-      roomName = `Room ${Math.floor(Math.random() * 5) + 1}`;
-    }
-    assignGroup(delegateId, groupName, roomName);
+    assignGroup(delegateId, groupName, "None");
   };
 
   // Bulk actions
   const handleBulkAutoGroup = () => {
+    const groupCounts: Record<string, number> = {};
+    const categoryGroupCounts: Record<string, Record<string, number>> = {};
+    const allHouses = [
+      "Abu Bakr", "Umar", "Uthman", "Ali",
+      "Aisha", "Khadijah", "Fatimah", "Zaynab"
+    ];
+    allHouses.forEach(h => {
+      groupCounts[h] = 0;
+      categoryGroupCounts[h] = {
+        "Secondary School": 0,
+        "Undergraduate/Leaver": 0,
+        "Others": 0
+      };
+    });
+    delegates.forEach(x => {
+      if (x.assignedGroup && x.assignedGroup !== "None" && allHouses.includes(x.assignedGroup)) {
+        groupCounts[x.assignedGroup]++;
+        const cat = x.category || "Others";
+        if (!categoryGroupCounts[x.assignedGroup][cat]) {
+          categoryGroupCounts[x.assignedGroup][cat] = 0;
+        }
+        categoryGroupCounts[x.assignedGroup][cat]++;
+      }
+    });
+
     selectedIds.forEach((id) => {
       const d = delegates.find((x) => x.id === id);
       if (d && d.paymentStatus === "verified" && d.assignedGroup === "None") {
-        let assignedGroup = "None";
-        let assignedRoom = "None";
-        if (d.gender === "Male") {
-          assignedGroup = d.category === "Secondary School" ? "Umar" : "Abu Bakr";
-          assignedRoom = `Room ${Math.floor(Math.random() * 5) + 1}`;
-        } else {
-          assignedGroup = d.category === "Secondary School" ? "Khadijah" : "Aisha";
-          assignedRoom = `Room ${Math.floor(Math.random() * 5) + 1}`;
+        const candidates = d.gender === "Male"
+          ? ["Abu Bakr", "Umar", "Uthman", "Ali"]
+          : ["Aisha", "Khadijah", "Fatimah", "Zaynab"];
+
+        let bestGroup = candidates[0];
+        let minCategoryCount = Infinity;
+        let minOverallCount = Infinity;
+
+        for (const group of candidates) {
+          const cat = d.category || "Others";
+          const catCount = categoryGroupCounts[group][cat] || 0;
+          const overallCount = groupCounts[group] || 0;
+
+          if (catCount < minCategoryCount) {
+            minCategoryCount = catCount;
+            minOverallCount = overallCount;
+            bestGroup = group;
+          } else if (catCount === minCategoryCount) {
+            if (overallCount < minOverallCount) {
+              minOverallCount = overallCount;
+              bestGroup = group;
+            }
+          }
         }
-        assignGroup(d.id, assignedGroup, assignedRoom);
+        const assignedGroup = bestGroup;
+
+        const cat = d.category || "Others";
+        groupCounts[assignedGroup]++;
+        categoryGroupCounts[assignedGroup][cat]++;
+
+        assignGroup(d.id, assignedGroup, "None");
       }
     });
     setSelectedIds([]);
@@ -159,7 +205,7 @@ export default function AdminOperationsPage() {
   const handleSingleEmailOpen = (delegate: Delegate) => {
     setEmailRecipients([delegate.email]);
     setEmailSubject("HTC Registration Update");
-    setEmailBody(`Dear {{full_name}},\n\nYour HTC registration is: {{htc_id}}.\nYour assigned room is: {{assigned_group}}.`);
+    setEmailBody(`Dear {{full_name}},\n\nYour HTC registration is: {{htc_id}}.\nYour assigned group is: {{assigned_group}}.`);
     setEmailSuccessMsg("");
     setEmailProgress(null);
     setShowEmailModal(true);
@@ -379,7 +425,7 @@ export default function AdminOperationsPage() {
                         ? "bg-success/15 text-success border border-success/20"
                         : "bg-error/15 text-error border border-error/20"
                     }`}>
-                      {d.paymentStatus === "verified" ? "Verified" : "Pending"}
+                      {d.paymentStatus === "verified" ? "Paid" : "Pending"}
                     </span>
                   </td>
                   <td className="p-4">
@@ -390,9 +436,6 @@ export default function AdminOperationsPage() {
                       onChange={(val) => handleInlineGroupChange(d.id, val)}
                       options={GROUP_OPTIONS}
                     />
-                    {d.assignedRoom !== "None" && (
-                      <span className="text-[10px] block mt-1 text-on-surface-variant font-mono">{d.assignedRoom}</span>
-                    )}
                   </td>
                   <td className="p-4 text-center">
                     <div className="flex gap-2 justify-center">

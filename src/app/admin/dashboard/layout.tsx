@@ -15,7 +15,7 @@ export default function AdminDashboardLayout({
 
   useEffect(() => {
     if (!isAdminLoggedIn) {
-      router.push("/admin/login");
+      router.push("/login");
     }
   }, [isAdminLoggedIn, router]);
 

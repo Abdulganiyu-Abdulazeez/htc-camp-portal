@@ -16,6 +16,7 @@ import {
   Database,
   Settings,
   Users,
+  Wallet,
 } from "lucide-react";
 
 interface DashboardNavProps {
@@ -40,7 +41,7 @@ export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
   const handleLogout = () => {
     if (isAdmin) {
       logoutAdmin();
-      router.push("/admin/login");
+      router.push("/login");
     } else {
       logoutDelegate();
       router.push("/");
@@ -93,6 +94,11 @@ export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
           },
         ]
       : []),
+    {
+      href: "/admin/dashboard/finances",
+      label: "Finances",
+      icon: Wallet,
+    },
     {
       href: "/admin/dashboard/settings",
       label: "Camp Settings",

@@ -14,7 +14,8 @@ import {
   GraduationCap,
   BookOpen,
   Briefcase,
-  Lock
+  Lock,
+  Clock
 } from "lucide-react";
 
 const DISTRICT_OPTIONS = [
@@ -75,7 +76,7 @@ const BLOOD_GROUP_OPTIONS = [
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { registerDelegate, confirmPayment, loginAsDelegate, settings } = useAppState();
+  const { registerDelegate, confirmPayment, loginAsDelegate, settings, recordFailedTransaction } = useAppState();
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -103,12 +104,14 @@ export default function RegisterPage() {
     skillOfInterest: "Videography/Video editing",
   });
 
-  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy);
+  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPaystackOverlay, setShowPaystackOverlay] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [currentRef, setCurrentRef] = useState("");
+  const [paymentError, setPaymentError] = useState("");
+  const [isPendingScreen, setIsPendingScreen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -216,17 +219,36 @@ export default function RegisterPage() {
       });
       setCurrentRef(newD.reference);
       setShowPaystackOverlay(true);
+      setIsPendingScreen(true);
     }
   };
 
   const simulateSuccessPayment = () => {
     setIsPaying(true);
+    setPaymentError("");
     setTimeout(() => {
       confirmPayment(currentRef);
       loginAsDelegate(currentRef);
       setIsPaying(false);
       setShowPaystackOverlay(false);
       router.push("/dashboard");
+    }, 2000);
+  };
+
+  const simulateFailedPayment = () => {
+    setIsPaying(true);
+    setPaymentError("");
+    setTimeout(() => {
+      const errorMsg = "Card Issuer Declined: Insufficient Funds";
+      recordFailedTransaction(
+        currentRef,
+        currentFee,
+        errorMsg,
+        formData.fullName,
+        formData.email
+      );
+      setIsPaying(false);
+      setPaymentError(errorMsg);
     }, 2000);
   };
 
@@ -249,8 +271,62 @@ export default function RegisterPage() {
 
       {/* Main card */}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-xl max-w-2xl w-full p-6 md:p-8">
-        {/* Stepper Header */}
-        <div className="flex items-center justify-between mb-8 overflow-x-auto py-2 custom-scrollbar">
+        {isPendingScreen ? (
+          <div className="flex flex-col items-center text-center gap-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <Clock className="w-8 h-8 animate-pulse" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-2xl font-extrabold text-on-surface">Registration Submitted</h3>
+              <p className="text-xs text-amber-600 font-bold uppercase tracking-wider bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 inline-block mx-auto">
+                Pending Manual Verification
+              </p>
+            </div>
+            <p className="text-sm text-on-surface-variant leading-relaxed">
+              Assalamu Alaykum <strong>{formData.fullName}</strong>. We have received your registration details.
+            </p>
+            <div className="p-4 bg-surface-container border border-outline-variant rounded-2xl w-full flex flex-col gap-2 text-xs text-left font-semibold">
+              <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                <span className="text-on-surface-variant">Reference Code:</span>
+                <strong className="font-mono text-primary text-sm select-all">{currentRef}</strong>
+              </div>
+              <div className="flex justify-between border-b border-outline-variant/30 py-2">
+                <span className="text-on-surface-variant">Email Address:</span>
+                <strong className="text-on-surface">{formData.email}</strong>
+              </div>
+              <div className="flex justify-between pt-2">
+                <span className="text-on-surface-variant">Amount Due:</span>
+                <strong className="text-on-surface">₦{currentFee.toLocaleString()}</strong>
+              </div>
+            </div>
+            <div className="text-xs text-on-surface-variant leading-relaxed bg-surface-container p-4 rounded-xl border border-outline-variant/50">
+              <strong>Please Note:</strong> If you did not pay online, make a transfer to the council's account and present your Reference Code (<strong>{currentRef}</strong>) to the administrators for manual activation. Once verified, you will receive your official encampment invite via email.
+            </div>
+            <div className="flex flex-col gap-2 w-full mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/");
+                }}
+                className="w-full py-3 bg-primary hover:bg-primary/95 text-white font-bold rounded-xl text-sm transition-all shadow cursor-pointer font-bold"
+              >
+                Return to Home
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPaystackOverlay(true);
+                }}
+                className="w-full py-3 border border-outline text-on-surface hover:bg-surface-container font-bold rounded-xl text-sm transition-all cursor-pointer font-bold"
+              >
+                Retry Online Payment
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Stepper Header */}
+            <div className="flex items-center justify-between mb-8 overflow-x-auto py-2 custom-scrollbar">
           {[1, 2, 3, 4].map((s) => (
             <React.Fragment key={s}>
               <div className="flex items-center gap-2">
@@ -854,6 +930,8 @@ export default function RegisterPage() {
             )}
           </div>
         </form>
+          </>
+        )}
       </div>
 
       {/* Paystack Simulation Overlay */}

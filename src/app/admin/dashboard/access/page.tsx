@@ -1,14 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAppState } from "@/context/app-state";
+import { useAppState, Administrator } from "@/context/app-state";
 import { AddAdminModal } from "@/components/add-admin-modal";
-import { Search, UserCheck, UserMinus, ShieldAlert, KeyRound } from "lucide-react";
+import { Search, UserCheck, UserMinus, ShieldAlert, KeyRound, UserCog } from "lucide-react";
 
 export default function AdminAccessPage() {
-  const { currentAdmin, administrators, deleteAdministrator } = useAppState();
+  const { currentAdmin, administrators, deleteAdministrator, updateAdminRole } = useAppState();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<Administrator | null>(null);
+  const [adminToEdit, setAdminToEdit] = useState<Administrator | null>(null);
+  const [editRole, setEditRole] = useState<"Super Admin" | "Registry">("Registry");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   // Guard: Registry users cannot access this page
   if (currentAdmin && currentAdmin.role !== "Super Admin") {
@@ -146,20 +151,33 @@ export default function AdminAccessPage() {
                       </span>
                     </td>
                     <td className="p-4 pr-6 text-center">
-                      {admin.id !== "admin_1" && (
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => {
-                            if (confirm(`Are you sure you want to remove ${admin.fullName} from access?`)) {
-                              deleteAdministrator(admin.id);
-                            }
+                            setAdminToEdit(admin);
+                            setEditRole(admin.role);
                           }}
-                          className="p-2 border border-outline text-error hover:bg-red-50 hover:border-red-200 rounded-lg transition-colors flex items-center justify-center gap-1.5 mx-auto font-bold"
-                          title="Revoke Secure Session Access"
+                          className="p-2 border border-outline text-primary hover:bg-primary/5 hover:border-primary/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 font-bold cursor-pointer"
+                          title="Edit Administrator Privilege Role"
                         >
-                          <UserMinus className="w-3.5 h-3.5" />
-                          Revoke Access
+                          <UserCog className="w-3.5 h-3.5" />
+                          Edit Role
                         </button>
-                      )}
+                        {admin.id !== "admin_1" && admin.id !== "admin_abdulganiyu" && admin.id !== "admin_fazazi" && (
+                          <button
+                            onClick={() => {
+                              setAdminToDelete(admin);
+                              setDeletePassword("");
+                              setDeleteError("");
+                            }}
+                            className="p-2 border border-outline text-error hover:bg-red-50 hover:border-red-200 rounded-lg transition-colors flex items-center justify-center gap-1.5 font-bold cursor-pointer"
+                            title="Revoke Secure Session Access"
+                          >
+                            <UserMinus className="w-3.5 h-3.5" />
+                            Revoke Access
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -170,6 +188,134 @@ export default function AdminAccessPage() {
       </div>
 
       <AddAdminModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {/* Custom Delete Confirmation Modal */}
+      {adminToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl border border-outline-variant p-6 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-error/15 flex items-center justify-center text-error shrink-0">
+                <ShieldAlert className="w-5 h-5 text-error" />
+              </div>
+              <div className="flex flex-col gap-1 w-full">
+                <h3 className="font-bold text-base text-on-surface">Revoke Administrator Access</h3>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Are you sure you want to revoke access for <strong className="text-on-surface">{adminToDelete.fullName}</strong> ({adminToDelete.email})?
+                </p>
+                <p className="text-[10px] text-error/85 font-medium mt-1 leading-normal bg-error/5 p-2 rounded-lg border border-error/10">
+                  This action is immediate. They will lose all administrative privileges on the Camp Portal.
+                </p>
+
+                {adminToDelete.role === "Super Admin" && (
+                  <div className="flex flex-col gap-1.5 mt-4">
+                    <label className="text-xs font-bold text-error flex items-center gap-1">
+                      Super Admin Security Override Required
+                    </label>
+                    <p className="text-[10px] text-on-surface-variant">
+                      Enter the system master password to authorize this action:
+                    </p>
+                    <input
+                      type="password"
+                      placeholder="Enter system password"
+                      value={deletePassword}
+                      onChange={(e) => {
+                        setDeletePassword(e.target.value);
+                        setDeleteError("");
+                      }}
+                      className="w-full px-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg text-xs font-semibold focus:outline-none"
+                    />
+                    {deleteError && (
+                      <p className="text-[10px] text-error font-bold mt-1">{deleteError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-2 pt-3 border-t border-outline-variant">
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminToDelete(null);
+                  setDeletePassword("");
+                  setDeleteError("");
+                }}
+                className="px-4 py-2 border border-outline text-on-surface-variant text-xs font-bold rounded-lg hover:bg-surface-container transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (adminToDelete.role === "Super Admin" && deletePassword !== "HtcAdminPortal'26") {
+                    setDeleteError("Invalid system password. Action rejected.");
+                    return;
+                  }
+                  await deleteAdministrator(adminToDelete.id);
+                  setAdminToDelete(null);
+                  setDeletePassword("");
+                  setDeleteError("");
+                }}
+                className="px-5 py-2 bg-error hover:bg-error/95 text-white text-xs font-bold rounded-lg shadow transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserMinus className="w-3.5 h-3.5 text-white" />
+                Revoke Access
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Edit Role Modal */}
+      {adminToEdit && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl border border-outline-variant p-6 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary shrink-0">
+                <UserCog className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex flex-col gap-1 w-full">
+                <h3 className="font-bold text-base text-on-surface">Edit Administrator Role</h3>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Update administrative privileges for <strong className="text-on-surface">{adminToEdit.fullName}</strong> ({adminToEdit.email}).
+                </p>
+                
+                <div className="flex flex-col gap-2 mt-4">
+                  <label className="text-xs font-bold text-on-surface-variant">Access Privilege Level</label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as "Super Admin" | "Registry")}
+                    className="w-full px-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg text-xs font-semibold focus:outline-none"
+                  >
+                    <option value="Registry">Registry (Auditing & Rooms)</option>
+                    <option value="Super Admin">Super Admin (Full Security & Controls)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-outline-variant">
+              <button
+                type="button"
+                onClick={() => setAdminToEdit(null)}
+                className="px-4 py-2 border border-outline text-on-surface-variant text-xs font-bold rounded-lg hover:bg-surface-container transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await updateAdminRole(adminToEdit.id, editRole);
+                  setAdminToEdit(null);
+                }}
+                className="px-5 py-2 bg-primary hover:bg-primary/95 text-white text-xs font-bold rounded-lg shadow transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

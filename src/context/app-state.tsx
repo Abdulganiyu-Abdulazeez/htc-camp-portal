@@ -29,14 +29,15 @@ export interface Delegate {
   emergencyContactName: string;
   emergencyContactPhone: string;
   paymentStatus: "verified" | "pending";
-  assignedGroup: string; // e.g. "Abu Bakr", "Aisha", "Khadijah", "Umar", "None"
+  assignedGroup: string; // e.g. "Abu Bakr", "Umar", "Uthman", "Ali", "Aisha", "Khadijah", "Fatimah", "Zaynab", "None"
   assignedRoom: string;  // e.g. "Room 4", "None"
   createdAt: string;
   skillOfInterest: string;
 }
 
 export interface CampSettings {
-  campFee: number;
+  campFeeSecondary: number;
+  campFeeUndergrad: number;
   capacityLimit: number;
   startDate: string;
   endDate: string;
@@ -64,6 +65,18 @@ export interface Announcement {
   attachments?: { name: string; url: string; type: "image" | "document" }[];
 }
 
+export interface PaystackTransaction {
+  id: string;
+  reference: string;
+  delegateName: string;
+  delegateEmail: string;
+  amount: number;
+  status: "success" | "failed";
+  channel: string;
+  errorMessage?: string;
+  createdAt: string;
+}
+
 interface AppStateContextType {
   delegates: Delegate[];
   settings: CampSettings;
@@ -72,6 +85,7 @@ interface AppStateContextType {
   currentAdmin: Administrator | null;
   administrators: Administrator[];
   announcements: Announcement[];
+  transactions: PaystackTransaction[];
   registerDelegate: (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => Delegate;
   confirmPayment: (reference: string) => void;
   overridePayment: (reference: string) => void;
@@ -85,9 +99,11 @@ interface AppStateContextType {
   updateSettings: (newSettings: Partial<CampSettings>) => void;
   addAdministrator: (fullName: string, email: string, role: "Super Admin" | "Registry") => Promise<void>;
   deleteAdministrator: (id: string) => Promise<void>;
+  updateAdminRole: (id: string, role: "Super Admin" | "Registry") => Promise<void>;
   publishAnnouncement: (title: string, category: Announcement["category"], content: string, expiryDate?: string, attachments?: Announcement["attachments"]) => Promise<void>;
   saveAnnouncementDraft: (title: string, category: Announcement["category"], content: string, expiryDate?: string, attachments?: Announcement["attachments"]) => Promise<void>;
   deleteAnnouncement: (id: string) => Promise<void>;
+  recordFailedTransaction: (ref: string, amount: number, errorMsg: string, delegateName: string, delegateEmail: string) => void;
 }
 
 const INITIAL_DELEGATES: Delegate[] = [
@@ -263,7 +279,8 @@ const INITIAL_DELEGATES: Delegate[] = [
 ];
 
 const INITIAL_SETTINGS: CampSettings = {
-  campFee: 6000, // Base/maximum fee
+  campFeeSecondary: 4000,
+  campFeeUndergrad: 6000,
   capacityLimit: 500,
   startDate: "2026-07-25",
   endDate: "2026-07-27",
@@ -272,15 +289,6 @@ const INITIAL_SETTINGS: CampSettings = {
 
 const INITIAL_ADMINISTRATORS: Administrator[] = [
   {
-    id: "admin_1",
-    fullName: "Usman Farooq",
-    email: "admin@example.com",
-    role: "Super Admin",
-    status: "Active",
-    lastLogin: "2026-07-14T03:22:28Z",
-    createdAt: "2026-07-08T03:03:13Z",
-  },
-  {
     id: "admin_2",
     fullName: "Musa Bello",
     email: "musa@example.com",
@@ -288,6 +296,22 @@ const INITIAL_ADMINISTRATORS: Administrator[] = [
     status: "Active",
     lastLogin: "2026-07-13T10:00:00Z",
     createdAt: "2026-07-08T03:05:00Z",
+  },
+  {
+    id: "admin_abdulganiyu",
+    fullName: "Abdulganiyu Abdulazeez",
+    email: "abdulganiyuabdulazeez20@gmail.com",
+    role: "Super Admin",
+    status: "Active",
+    createdAt: "2026-07-14T20:30:00Z",
+  },
+  {
+    id: "admin_fazazi",
+    fullName: "Abdulbasit Fazazi",
+    email: "fazaziishola@gmail.com",
+    role: "Super Admin",
+    status: "Active",
+    createdAt: "2026-07-14T20:30:00Z",
   }
 ];
 
@@ -310,14 +334,19 @@ const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   }
 ];
 
-export const getDelegateFee = (category: string, yearOfStudy?: string) => {
+export const getDelegateFee = (
+  category: string,
+  yearOfStudy?: string,
+  campFeeSecondary: number = 4000,
+  campFeeUndergrad: number = 6000
+) => {
   if (category === "Secondary School") {
-    return 4000;
+    return campFeeSecondary;
   }
   if (category === "Undergraduate/Leaver" && yearOfStudy === "Prospective Candidate") {
-    return 4000;
+    return campFeeSecondary;
   }
-  return 6000;
+  return campFeeUndergrad;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
@@ -330,7 +359,28 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentAdmin, setCurrentAdmin] = useState<Administrator | null>(null);
   const [administrators, setAdministrators] = useState<Administrator[]>(INITIAL_ADMINISTRATORS);
   const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
+  const [failedTransactions, setFailedTransactions] = useState<PaystackTransaction[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Derived transactions (success from verified delegates + failed attempts)
+  const transactions: PaystackTransaction[] = React.useMemo(() => {
+    const successTransactions = delegates
+      .filter((d) => d.paymentStatus === "verified")
+      .map((d) => ({
+        id: `tx_success_${d.id}`,
+        reference: d.reference,
+        delegateName: d.fullName,
+        delegateEmail: d.email,
+        amount: getDelegateFee(d.category, d.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad),
+        status: "success" as const,
+        channel: "card",
+        createdAt: d.createdAt,
+      }));
+
+    return [...successTransactions, ...failedTransactions].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [delegates, failedTransactions, settings.campFeeSecondary, settings.campFeeUndergrad]);
 
   // Load initial state from sessionStorage on client side after mount
   useEffect(() => {
@@ -398,6 +448,15 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsAdminLoggedIn(storedAdminLoggedIn === "true");
     }
 
+    const storedFailedTx = sessionStorage.getItem("htc_failed_transactions");
+    if (storedFailedTx) {
+      try {
+        setFailedTransactions(JSON.parse(storedFailedTx));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     setIsLoaded(true);
 
     // Fetch fresh data from Supabase in the background if configured
@@ -412,7 +471,14 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             .single();
 
           if (!settingsError && settingsData) {
-            setSettings(settingsData);
+            setSettings({
+              campFeeSecondary: settingsData.campFeeSecondary ?? 4000,
+              campFeeUndergrad: settingsData.campFeeUndergrad ?? settingsData.campFee ?? 6000,
+              capacityLimit: settingsData.capacityLimit,
+              startDate: settingsData.startDate,
+              endDate: settingsData.endDate,
+              autoGroupingEnabled: settingsData.autoGroupingEnabled,
+            });
           }
 
           // Fetch delegates
@@ -432,7 +498,44 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             .order("createdAt", { ascending: true });
 
           if (!adminsError && adminsData) {
-            setAdministrators(adminsData);
+            let updatedAdmins = [...adminsData];
+            const abdulEmail = "abdulganiyuabdulazeez20@gmail.com";
+            const fazaziEmail = "fazaziishola@gmail.com";
+            
+            const hasAbdul = adminsData.some((a) => a.email.toLowerCase() === abdulEmail);
+            const hasFazazi = adminsData.some((a) => a.email.toLowerCase() === fazaziEmail);
+
+            if (!hasAbdul) {
+              const abdulAdmin: Administrator = {
+                id: "admin_abdulganiyu",
+                fullName: "Abdulganiyu Abdulazeez",
+                email: abdulEmail,
+                role: "Super Admin",
+                status: "Active",
+                createdAt: new Date().toISOString(),
+              };
+              updatedAdmins.push(abdulAdmin);
+              supabase.from("administrators").insert([abdulAdmin]).then(({ error }) => {
+                if (error) console.error("Failed to auto-seed Abdulganiyu to Supabase:", error);
+              });
+            }
+
+            if (!hasFazazi) {
+              const fazaziAdmin: Administrator = {
+                id: "admin_fazazi",
+                fullName: "Abdulbasit Fazazi",
+                email: fazaziEmail,
+                role: "Super Admin",
+                status: "Active",
+                createdAt: new Date().toISOString(),
+              };
+              updatedAdmins.push(fazaziAdmin);
+              supabase.from("administrators").insert([fazaziAdmin]).then(({ error }) => {
+                if (error) console.error("Failed to auto-seed Fazazi to Supabase:", error);
+              });
+            }
+
+            setAdministrators(updatedAdmins);
           }
 
           // Fetch announcements
@@ -510,6 +613,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     sessionStorage.setItem("htc_announcements", JSON.stringify(announcements));
   }, [announcements, isLoaded]);
 
+  useEffect(() => {
+    if (!isLoaded) return;
+    sessionStorage.setItem("htc_failed_transactions", JSON.stringify(failedTransactions));
+  }, [failedTransactions, isLoaded]);
+
   const registerDelegate = (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => {
     const timestamp = Date.now();
     const ref = `REF-${timestamp}`;
@@ -558,13 +666,56 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
           // If auto-grouping is enabled, allocate
           if (settings.autoGroupingEnabled) {
-            if (d.gender === "Male") {
-              assignedGroup = d.category === "Secondary School" ? "Umar" : "Abu Bakr";
-              assignedRoom = `Room ${Math.floor(Math.random() * 5) + 1}`;
-            } else {
-              assignedGroup = d.category === "Secondary School" ? "Khadijah" : "Aisha";
-              assignedRoom = `Room ${Math.floor(Math.random() * 5) + 1}`;
+            const groupCounts: Record<string, number> = {};
+            const categoryGroupCounts: Record<string, Record<string, number>> = {};
+            const allHouses = [
+              "Abu Bakr", "Umar", "Uthman", "Ali",
+              "Aisha", "Khadijah", "Fatimah", "Zaynab"
+            ];
+            allHouses.forEach(h => {
+              groupCounts[h] = 0;
+              categoryGroupCounts[h] = {
+                "Secondary School": 0,
+                "Undergraduate/Leaver": 0,
+                "Others": 0
+              };
+            });
+            prev.forEach(x => {
+              if (x.assignedGroup && x.assignedGroup !== "None" && allHouses.includes(x.assignedGroup)) {
+                groupCounts[x.assignedGroup]++;
+                const cat = x.category || "Others";
+                if (!categoryGroupCounts[x.assignedGroup][cat]) {
+                  categoryGroupCounts[x.assignedGroup][cat] = 0;
+                }
+                categoryGroupCounts[x.assignedGroup][cat]++;
+              }
+            });
+
+            const candidates = d.gender === "Male"
+              ? ["Abu Bakr", "Umar", "Uthman", "Ali"]
+              : ["Aisha", "Khadijah", "Fatimah", "Zaynab"];
+
+            let bestGroup = candidates[0];
+            let minCategoryCount = Infinity;
+            let minOverallCount = Infinity;
+
+            for (const group of candidates) {
+              const cat = d.category || "Others";
+              const catCount = categoryGroupCounts[group][cat] || 0;
+              const overallCount = groupCounts[group] || 0;
+
+              if (catCount < minCategoryCount) {
+                minCategoryCount = catCount;
+                minOverallCount = overallCount;
+                bestGroup = group;
+              } else if (catCount === minCategoryCount) {
+                if (overallCount < minOverallCount) {
+                  minOverallCount = overallCount;
+                  bestGroup = group;
+                }
+              }
             }
+            assignedGroup = bestGroup;
           }
 
           const updated = {
@@ -604,6 +755,37 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           } else {
             console.log(`Successfully synced payment confirmation to Supabase for reference ${reference}.`);
           }
+        });
+    }
+
+    // Trigger confirmation email dispatch via Next.js API route
+    if (updatedDelegate) {
+      const delegate: Delegate = updatedDelegate;
+      const fee = getDelegateFee(delegate.category, delegate.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad);
+      fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: delegate.email,
+          name: delegate.fullName,
+          reference: delegate.reference,
+          amount: fee,
+          category: delegate.category,
+          group: delegate.assignedGroup,
+        }),
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            console.log(`Successfully sent registration confirmation email to ${delegate.email}`);
+          } else {
+            const err = await res.json();
+            console.error("Resend API email dispatch failed:", err);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch send-email API:", err);
         });
     }
   };
@@ -656,18 +838,65 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updatedDelegatesList: Delegate[] = [];
 
     setDelegates((prev) => {
+      const groupCounts: Record<string, number> = {};
+      const categoryGroupCounts: Record<string, Record<string, number>> = {};
+      const allHouses = [
+        "Abu Bakr", "Umar", "Uthman", "Ali",
+        "Aisha", "Khadijah", "Fatimah", "Zaynab"
+      ];
+      allHouses.forEach(h => {
+        groupCounts[h] = 0;
+        categoryGroupCounts[h] = {
+          "Secondary School": 0,
+          "Undergraduate/Leaver": 0,
+          "Others": 0
+        };
+      });
+      prev.forEach(x => {
+        if (x.assignedGroup && x.assignedGroup !== "None" && allHouses.includes(x.assignedGroup)) {
+          groupCounts[x.assignedGroup]++;
+          const cat = x.category || "Others";
+          if (!categoryGroupCounts[x.assignedGroup][cat]) {
+            categoryGroupCounts[x.assignedGroup][cat] = 0;
+          }
+          categoryGroupCounts[x.assignedGroup][cat]++;
+        }
+      });
+
       const updated = prev.map((d) => {
         if (d.paymentStatus === "verified" && d.assignedGroup === "None") {
           let assignedGroup = "None";
           let assignedRoom = "None";
           
-          if (d.gender === "Male") {
-            assignedGroup = d.category === "Secondary School" ? "Umar" : "Abu Bakr";
-            assignedRoom = `Room ${Math.floor(Math.random() * 5) + 1}`;
-          } else {
-            assignedGroup = d.category === "Secondary School" ? "Khadijah" : "Aisha";
-            assignedRoom = `Room ${Math.floor(Math.random() * 5) + 1}`;
+          const candidates = d.gender === "Male"
+            ? ["Abu Bakr", "Umar", "Uthman", "Ali"]
+            : ["Aisha", "Khadijah", "Fatimah", "Zaynab"];
+
+          let bestGroup = candidates[0];
+          let minCategoryCount = Infinity;
+          let minOverallCount = Infinity;
+
+          for (const group of candidates) {
+            const cat = d.category || "Others";
+            const catCount = categoryGroupCounts[group][cat] || 0;
+            const overallCount = groupCounts[group] || 0;
+
+            if (catCount < minCategoryCount) {
+              minCategoryCount = catCount;
+              minOverallCount = overallCount;
+              bestGroup = group;
+            } else if (catCount === minCategoryCount) {
+              if (overallCount < minOverallCount) {
+                minOverallCount = overallCount;
+                bestGroup = group;
+              }
+            }
           }
+          assignedGroup = bestGroup;
+
+          const cat = d.category || "Others";
+          groupCounts[assignedGroup]++;
+          categoryGroupCounts[assignedGroup][cat]++;
 
           const updatedDel = {
             ...d,
@@ -743,24 +972,58 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const loginAsAdmin = (email: string, password: string) => {
     const trimmedEmail = email.trim().toLowerCase();
-    const validPassword = password === "admin123" || password === "htc2026";
+    const validPassword = password === "HtcAdminPortal'26";
 
     if (!validPassword) return false;
 
-    // Check fallback hardcoded superadmin accounts
-    if (trimmedEmail === "admin@ikeja-area.org" || trimmedEmail === "admin@example.com") {
-      const defaultAdmin: Administrator = {
-        id: "admin_1",
-        fullName: "Usman Farooq",
+    // Check specific custom admin accounts requested by the user
+    if (trimmedEmail === "abdulganiyuabdulazeez20@gmail.com" || trimmedEmail === "fazaziishola@gmail.com") {
+      const isAbdul = trimmedEmail === "abdulganiyuabdulazeez20@gmail.com";
+      const fullName = isAbdul ? "Abdulganiyu Abdulazeez" : "Abdulbasit Fazazi";
+      const adminId = isAbdul ? "admin_abdulganiyu" : "admin_fazazi";
+      
+      const admin: Administrator = {
+        id: adminId,
+        fullName: fullName,
         email: trimmedEmail,
         role: "Super Admin",
         status: "Active",
         createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
       };
-      setCurrentAdmin(defaultAdmin);
+
+      setCurrentAdmin(admin);
       setIsAdminLoggedIn(true);
+
+      const exists = administrators.some((a) => a.email.toLowerCase() === trimmedEmail);
+      if (!exists) {
+        setAdministrators((prev) => [...prev, admin]);
+        if (hasSupabase) {
+          supabase
+            .from("administrators")
+            .insert([admin])
+            .then(({ error }) => {
+              if (error) console.error("Failed to insert custom admin to Supabase:", error);
+            });
+        }
+      } else {
+        setAdministrators((prev) =>
+          prev.map((a) => (a.email.toLowerCase() === trimmedEmail ? { ...a, lastLogin: admin.lastLogin } : a))
+        );
+        if (hasSupabase) {
+          supabase
+            .from("administrators")
+            .update({ lastLogin: admin.lastLogin })
+            .eq("email", trimmedEmail)
+            .then(({ error }) => {
+              if (error) console.error("Failed to update last login in Supabase:", error);
+            });
+        }
+      }
       return true;
     }
+
+
 
     // Check registered administrators list
     const matchedAdmin = administrators.find(
@@ -809,6 +1072,42 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.error("Failed to delete administrator from Supabase:", error);
       }
     }
+  };
+
+  const updateAdminRole = async (id: string, role: "Super Admin" | "Registry") => {
+    setAdministrators((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, role } : a))
+    );
+    if (currentAdmin && currentAdmin.id === id) {
+      setCurrentAdmin((prev) => (prev ? { ...prev, role } : null));
+    }
+    if (hasSupabase) {
+      const { error } = await supabase.from("administrators").update({ role }).eq("id", id);
+      if (error) {
+        console.error("Failed to update administrator role in Supabase:", error);
+      }
+    }
+  };
+
+  const recordFailedTransaction = (
+    ref: string,
+    amount: number,
+    errorMsg: string,
+    delegateName: string,
+    delegateEmail: string
+  ) => {
+    const newTx: PaystackTransaction = {
+      id: `tx_failed_${Date.now()}`,
+      reference: ref,
+      delegateName,
+      delegateEmail,
+      amount,
+      status: "failed" as const,
+      channel: "card",
+      errorMessage: errorMsg,
+      createdAt: new Date().toISOString(),
+    };
+    setFailedTransactions((prev) => [newTx, ...prev]);
   };
 
   const publishAnnouncement = async (
@@ -905,9 +1204,13 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
 
     if (hasSupabase && finalSettings) {
+      const updateData = {
+        ...newSettings,
+        ...(newSettings.campFeeUndergrad !== undefined ? { campFee: newSettings.campFeeUndergrad } : {}),
+      };
       supabase
         .from("settings")
-        .update(newSettings)
+        .update(updateData)
         .eq("id", 1)
         .then(({ error }) => {
           if (error) {
@@ -929,6 +1232,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         currentAdmin,
         administrators,
         announcements,
+        transactions,
         registerDelegate,
         confirmPayment,
         overridePayment,
@@ -942,9 +1246,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateSettings,
         addAdministrator,
         deleteAdministrator,
+        updateAdminRole,
         publishAnnouncement,
         saveAnnouncementDraft,
         deleteAnnouncement,
+        recordFailedTransaction,
       }}
     >
       {children}

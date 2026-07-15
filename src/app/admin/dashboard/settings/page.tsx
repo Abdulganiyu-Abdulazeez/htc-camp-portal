@@ -8,7 +8,8 @@ export default function AdminSettingsPage() {
   const { settings, updateSettings } = useAppState();
 
   const [settingsForm, setSettingsForm] = useState({
-    campFee: settings.campFee,
+    campFeeSecondary: settings.campFeeSecondary,
+    campFeeUndergrad: settings.campFeeUndergrad,
     capacityLimit: settings.capacityLimit,
     startDate: settings.startDate,
     endDate: settings.endDate,
@@ -18,7 +19,8 @@ export default function AdminSettingsPage() {
   // Sync settings when loaded from Supabase
   useEffect(() => {
     setSettingsForm({
-      campFee: settings.campFee,
+      campFeeSecondary: settings.campFeeSecondary,
+      campFeeUndergrad: settings.campFeeUndergrad,
       capacityLimit: settings.capacityLimit,
       startDate: settings.startDate,
       endDate: settings.endDate,
@@ -52,17 +54,29 @@ export default function AdminSettingsPage() {
         
         <form onSubmit={handleSaveSettings} className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
-              <label className="text-xs font-semibold text-on-surface-variant">Camp Registration Fee Structure (₦)</label>
-              <div className="p-3 bg-surface-container border border-outline-variant rounded-lg text-xs font-medium text-on-surface-variant flex flex-col gap-1">
-                <div className="flex justify-between">
-                  <span>Secondary / Leavers:</span>
-                  <span className="font-bold text-primary">₦4,000</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Undergraduates / Others:</span>
-                  <span className="font-bold text-primary">₦6,000</span>
-                </div>
+            <div className="flex flex-col gap-3 col-span-2 md:col-span-1">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-on-surface-variant">Secondary School Camp Fee (₦)</label>
+                <input
+                  type="number"
+                  value={settingsForm.campFeeSecondary}
+                  onChange={(e) => setSettingsForm((prev) => ({ ...prev, campFeeSecondary: Number(e.target.value) }))}
+                  className="w-full px-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg text-sm focus:outline-none"
+                  required
+                  min={1000}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-on-surface-variant">Undergraduate & Others Fee (₦)</label>
+                <input
+                  type="number"
+                  value={settingsForm.campFeeUndergrad}
+                  onChange={(e) => setSettingsForm((prev) => ({ ...prev, campFeeUndergrad: Number(e.target.value) }))}
+                  className="w-full px-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg text-sm focus:outline-none"
+                  required
+                  min={1000}
+                />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -99,8 +113,8 @@ export default function AdminSettingsPage() {
 
           <div className="flex items-center justify-between border border-outline-variant p-4 rounded-xl">
             <div>
-              <p className="text-xs font-bold">Automatic Room Assignment Rule Engine</p>
-              <p className="text-[10px] text-on-surface-variant">Trigger room induction automatically when payments confirm.</p>
+              <p className="text-xs font-bold">Automatic Group Assignment Rule Engine</p>
+              <p className="text-[10px] text-on-surface-variant">Trigger group assignment automatically when payments confirm.</p>
             </div>
             <input
               type="checkbox"
