@@ -5,6 +5,11 @@ import { AppStateProvider } from "@/context/app-state";
 export const metadata: Metadata = {
   title: "MSSN Ikeja Area Council HTC Portal",
   description: "Holiday Training Course (HTC) Portal - Spiritual, Academic and Personal Growth for Muslims.",
+  icons: {
+    icon: "/mss-ikeja-logo.png",
+    shortcut: "/mss-ikeja-logo.png",
+    apple: "/mss-ikeja-logo.png",
+  },
 };
 
 export default function RootLayout({
