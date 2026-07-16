@@ -43,7 +43,10 @@ export default function UnifiedLoginPage() {
     setErrorMsg("");
 
     // Check if the input is a recognized admin email
-    const isCustomAdmin = trimmedInput === "abdulganiyuabdulazeez20@gmail.com" || trimmedInput === "fazaziishola@gmail.com";
+    const isCustomAdmin =
+      trimmedInput === "abdulganiyuabdulazeez20@gmail.com" ||
+      trimmedInput === "fazaziishola@gmail.com" ||
+      trimmedInput === "abdulfataiadam3@gmail.com";
     const isDatabaseAdmin = administrators.some((a) => a.email.toLowerCase() === trimmedInput);
 
     if (isCustomAdmin || isDatabaseAdmin) {

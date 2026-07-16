@@ -106,177 +106,9 @@ interface AppStateContextType {
   recordFailedTransaction: (ref: string, amount: number, errorMsg: string, delegateName: string, delegateEmail: string) => void;
 }
 
-const INITIAL_DELEGATES: Delegate[] = [
-  {
-    id: "HTC-2026-0482",
-    reference: "REF-1720894562",
-    fullName: "Abdullah Danjuma",
-    email: "abdullah@example.com",
-    phone: "08012345678",
-    gender: "Male",
-    category: "Undergraduate/Leaver",
-    school: "University of Lagos",
-    courseOfStudy: "Computer Engineering",
-    yearOfStudy: "400 Level",
-    medicalCondition: "Asthma",
-    chronicConditions: "Asthmatic, carries Ventolin inhaler.",
-    bloodGroup: "O+",
-    genotype: "AA",
-    emergencyContactName: "Ibrahim Danjuma",
-    emergencyContactPhone: "08087654321",
-    paymentStatus: "verified",
-    assignedGroup: "Abu Bakr",
-    assignedRoom: "Room 4",
-    createdAt: "2026-07-08T10:00:00Z",
-    skillOfInterest: "Videography/Video editing",
-  },
-  {
-    id: "HTC-2026-0123",
-    reference: "REF-1720894599",
-    fullName: "Aisha Yusuf",
-    email: "aisha@example.com",
-    phone: "08023456789",
-    gender: "Female",
-    category: "Undergraduate/Leaver",
-    school: "Lagos State University",
-    courseOfStudy: "Medicine & Surgery",
-    yearOfStudy: "500 Level",
-    medicalCondition: "None",
-    bloodGroup: "A+",
-    genotype: "AA",
-    emergencyContactName: "Maryam Yusuf",
-    emergencyContactPhone: "08076543210",
-    paymentStatus: "verified",
-    assignedGroup: "Aisha",
-    assignedRoom: "Room 1",
-    createdAt: "2026-07-09T11:30:00Z",
-    skillOfInterest: "Mobile graphics",
-  },
-  {
-    id: "HTC-2026-0294",
-    reference: "REF-1720894611",
-    fullName: "Halimah Bello",
-    email: "halimah@example.com",
-    phone: "08034567890",
-    gender: "Female",
-    category: "Undergraduate/Leaver",
-    school: "Yaba College of Technology",
-    courseOfStudy: "Prospective Candidate",
-    yearOfStudy: "Prospective Candidate",
-    medicalCondition: "None",
-    bloodGroup: "B+",
-    genotype: "AS",
-    emergencyContactName: "Zainab Bello",
-    emergencyContactPhone: "08065432109",
-    paymentStatus: "verified",
-    assignedGroup: "Aisha",
-    assignedRoom: "Room 2",
-    createdAt: "2026-07-09T14:45:00Z",
-    skillOfInterest: "Crocheting",
-  },
-  {
-    id: "pending_1",
-    reference: "REF-7298319203",
-    fullName: "Umar Farooq",
-    email: "umar@example.com",
-    phone: "08045678901",
-    gender: "Male",
-    category: "Secondary School",
-    school: "Ikeja Grammar School",
-    secondaryDistrict: "District 1",
-    secondaryClass: "SSS 2",
-    medicalCondition: "None",
-    emergencyContactName: "Farooq Usman",
-    emergencyContactPhone: "08054321098",
-    paymentStatus: "pending",
-    assignedGroup: "None",
-    assignedRoom: "None",
-    createdAt: "2026-07-10T09:15:00Z",
-    skillOfInterest: "Ankara crafts",
-  },
-  {
-    id: "HTC-2026-0005",
-    reference: "REF-1720894722",
-    fullName: "Zubair Alabi",
-    email: "zubair@example.com",
-    phone: "08056789012",
-    gender: "Male",
-    category: "Secondary School",
-    school: "Ikeja High School",
-    secondaryDistrict: "District 2",
-    secondaryClass: "SSS 3",
-    medicalCondition: "None",
-    emergencyContactName: "Luqman Alabi",
-    emergencyContactPhone: "08043210987",
-    paymentStatus: "verified",
-    assignedGroup: "None",
-    assignedRoom: "None",
-    createdAt: "2026-07-10T16:20:00Z",
-    skillOfInterest: "public speaking & creative writing",
-  },
-  {
-    id: "pending_2",
-    reference: "REF-8293740192",
-    fullName: "Fatimah Shuaib",
-    email: "fatimah@example.com",
-    phone: "08067890123",
-    gender: "Female",
-    category: "Secondary School",
-    school: "Fadilah College",
-    secondaryDistrict: "District 4",
-    secondaryClass: "SSS 1",
-    medicalCondition: "Nut Allergy",
-    nutAllergy: true,
-    otherAllergies: "Peanuts",
-    emergencyContactName: "Shuaib Ahmed",
-    emergencyContactPhone: "08032109876",
-    paymentStatus: "pending",
-    assignedGroup: "None",
-    assignedRoom: "None",
-    createdAt: "2026-07-11T08:00:00Z",
-    skillOfInterest: "Crocheting",
-  },
-  {
-    id: "HTC-2026-0007",
-    reference: "REF-1720894812",
-    fullName: "Mustapha Bashir",
-    email: "mustapha@example.com",
-    phone: "08078901234",
-    gender: "Male",
-    category: "Others",
-    school: "Sterling Bank",
-    jobTitle: "Software Engineer",
-    employmentMode: "Full-Time",
-    medicalCondition: "None",
-    emergencyContactName: "Bashir Musa",
-    emergencyContactPhone: "08021098765",
-    paymentStatus: "verified",
-    assignedGroup: "None",
-    assignedRoom: "None",
-    createdAt: "2026-07-11T10:10:00Z",
-    skillOfInterest: "Mobile graphics",
-  },
-  {
-    id: "HTC-2026-0008",
-    reference: "REF-1720894888",
-    fullName: "Mariam Ibrahim",
-    email: "mariam@example.com",
-    phone: "08089012345",
-    gender: "Female",
-    category: "Secondary School",
-    school: "Model College Meiran",
-    secondaryDistrict: "District 3",
-    secondaryClass: "JSS 3",
-    medicalCondition: "None",
-    emergencyContactName: "Ibrahim Kolawole",
-    emergencyContactPhone: "08010987654",
-    paymentStatus: "verified",
-    assignedGroup: "None",
-    assignedRoom: "None",
-    createdAt: "2026-07-11T15:30:00Z",
-    skillOfInterest: "public speaking & creative writing",
-  }
-];
+const INITIAL_DELEGATES: Delegate[] = [];
+
+
 
 const INITIAL_SETTINGS: CampSettings = {
   campFeeSecondary: 4000,
@@ -288,15 +120,6 @@ const INITIAL_SETTINGS: CampSettings = {
 };
 
 const INITIAL_ADMINISTRATORS: Administrator[] = [
-  {
-    id: "admin_2",
-    fullName: "Musa Bello",
-    email: "musa@example.com",
-    role: "Registry",
-    status: "Active",
-    lastLogin: "2026-07-13T10:00:00Z",
-    createdAt: "2026-07-08T03:05:00Z",
-  },
   {
     id: "admin_abdulganiyu",
     fullName: "Abdulganiyu Abdulazeez",
@@ -312,27 +135,18 @@ const INITIAL_ADMINISTRATORS: Administrator[] = [
     role: "Super Admin",
     status: "Active",
     createdAt: "2026-07-14T20:30:00Z",
+  },
+  {
+    id: "admin_abdulfatai",
+    fullName: "Abdulfatai Adam",
+    email: "abdulfataiadam3@gmail.com",
+    role: "Super Admin",
+    status: "Active",
+    createdAt: "2026-07-14T20:30:00Z",
   }
 ];
 
-const INITIAL_ANNOUNCEMENTS: Announcement[] = [
-  {
-    id: "ann_1",
-    title: "HTC Registration Deadline Extended",
-    category: "Logistics",
-    content: "We have extended registration for the HTC July Session until July 20. Please complete your fee payment as early as possible to secure your hostel allocation.",
-    status: "Published",
-    createdAt: "2026-07-11T09:00:00Z",
-  },
-  {
-    id: "ann_2",
-    title: "Pre-camp Briefing Session",
-    category: "Curriculum",
-    content: "There will be a virtual pre-camp meeting on Zoom for all registered undergraduates and school leavers. The link will be dispatched via email. We will outline the course curriculum and medical guidelines.",
-    status: "Published",
-    createdAt: "2026-07-08T11:30:00Z",
-  }
-];
+const INITIAL_ANNOUNCEMENTS: Announcement[] = [];
 
 export const getDelegateFee = (
   category: string,
@@ -501,9 +315,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             let updatedAdmins = [...adminsData];
             const abdulEmail = "abdulganiyuabdulazeez20@gmail.com";
             const fazaziEmail = "fazaziishola@gmail.com";
+            const abdulfataiEmail = "abdulfataiadam3@gmail.com";
             
             const hasAbdul = adminsData.some((a) => a.email.toLowerCase() === abdulEmail);
             const hasFazazi = adminsData.some((a) => a.email.toLowerCase() === fazaziEmail);
+            const hasAbdulfatai = adminsData.some((a) => a.email.toLowerCase() === abdulfataiEmail);
 
             if (!hasAbdul) {
               const abdulAdmin: Administrator = {
@@ -532,6 +348,21 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               updatedAdmins.push(fazaziAdmin);
               supabase.from("administrators").insert([fazaziAdmin]).then(({ error }) => {
                 if (error) console.error("Failed to auto-seed Fazazi to Supabase:", error);
+              });
+            }
+
+            if (!hasAbdulfatai) {
+              const abdulfataiAdmin: Administrator = {
+                id: "admin_abdulfatai",
+                fullName: "Abdulfatai Adam",
+                email: abdulfataiEmail,
+                role: "Super Admin",
+                status: "Active",
+                createdAt: new Date().toISOString(),
+              };
+              updatedAdmins.push(abdulfataiAdmin);
+              supabase.from("administrators").insert([abdulfataiAdmin]).then(({ error }) => {
+                if (error) console.error("Failed to auto-seed Abdulfatai to Supabase:", error);
               });
             }
 
@@ -981,10 +812,17 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!validPassword) return false;
 
     // Check specific custom admin accounts requested by the user
-    if (trimmedEmail === "abdulganiyuabdulazeez20@gmail.com" || trimmedEmail === "fazaziishola@gmail.com") {
-      const isAbdul = trimmedEmail === "abdulganiyuabdulazeez20@gmail.com";
-      const fullName = isAbdul ? "Abdulganiyu Abdulazeez" : "Abdulbasit Fazazi";
-      const adminId = isAbdul ? "admin_abdulganiyu" : "admin_fazazi";
+    if (
+      trimmedEmail === "abdulganiyuabdulazeez20@gmail.com" ||
+      trimmedEmail === "fazaziishola@gmail.com" ||
+      trimmedEmail === "abdulfataiadam3@gmail.com"
+    ) {
+      const nameMap: Record<string, { fullName: string; id: string }> = {
+        "abdulganiyuabdulazeez20@gmail.com": { fullName: "Abdulganiyu Abdulazeez", id: "admin_abdulganiyu" },
+        "fazaziishola@gmail.com": { fullName: "Abdulbasit Fazazi", id: "admin_fazazi" },
+        "abdulfataiadam3@gmail.com": { fullName: "Abdulfatai Adam", id: "admin_abdulfatai" },
+      };
+      const { fullName, id: adminId } = nameMap[trimmedEmail];
       
       const admin: Administrator = {
         id: adminId,
