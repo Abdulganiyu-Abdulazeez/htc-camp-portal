@@ -10,11 +10,10 @@ import {
   ArrowLeft,
   ArrowRight,
   CreditCard,
-  X,
   GraduationCap,
   BookOpen,
   Briefcase,
-  Lock
+  Lock,
 } from "lucide-react";
 
 const DISTRICT_OPTIONS = [
@@ -75,7 +74,7 @@ const BLOOD_GROUP_OPTIONS = [
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { registerDelegate, confirmPayment, loginAsDelegate, settings } = useAppState();
+  const { registerDelegate, loginAsDelegate, settings } = useAppState();
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -103,10 +102,9 @@ export default function RegisterPage() {
     skillOfInterest: "Videography/Video editing",
   });
 
-  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy);
+  const currentFee = getDelegateFee(formData.category, formData.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showPaystackOverlay, setShowPaystackOverlay] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [currentRef, setCurrentRef] = useState("");
 
@@ -178,7 +176,6 @@ export default function RegisterPage() {
   const handleSubmitRegistration = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateStep()) {
-      // Compile comprehensive description of medical conditions
       const allergies = [];
       if (formData.nutAllergy) allergies.push("Nut Allergy");
       if (formData.lactoseIntolerance) allergies.push("Lactose Intolerance");
@@ -214,20 +211,54 @@ export default function RegisterPage() {
         emergencyContactPhone: formData.emergencyContactPhone,
         skillOfInterest: formData.skillOfInterest,
       });
-      setCurrentRef(newD.reference);
-      setShowPaystackOverlay(true);
-    }
-  };
 
-  const simulateSuccessPayment = () => {
-    setIsPaying(true);
-    setTimeout(() => {
-      confirmPayment(currentRef);
-      loginAsDelegate(currentRef);
-      setIsPaying(false);
-      setShowPaystackOverlay(false);
-      router.push("/dashboard");
-    }, 2000);
+      const ref = newD.reference;
+      setCurrentRef(ref);
+      setIsPaying(true);
+
+      // Launch real Paystack inline popup
+      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+      const callbackUrl = `${window.location.origin}/payment/callback`;
+
+      // @ts-expect-error PaystackPop is loaded via script tag
+      const handler = window.PaystackPop?.setup({
+        key: publicKey,
+        email: formData.email,
+        amount: currentFee * 100, // kobo
+        currency: "NGN",
+        ref: ref,
+        metadata: {
+          custom_fields: [
+            { display_name: "Full Name", variable_name: "full_name", value: formData.fullName },
+            { display_name: "Phone", variable_name: "phone", value: formData.phone },
+            { display_name: "Category", variable_name: "category", value: formData.category },
+          ],
+        },
+        callback: () => {
+          // Paystack calls this on successful payment before redirect
+          router.push(`/payment/callback?reference=${ref}`);
+        },
+        onClose: () => {
+          // User closed the popup without paying
+          setIsPaying(false);
+          router.push(`/payment/callback?reference=${ref}`);
+        },
+      });
+
+      if (handler) {
+        handler.openIframe();
+      } else {
+        // Fallback: redirect to Paystack hosted page
+        const params = new URLSearchParams({
+          key: publicKey || "",
+          email: formData.email,
+          amount: String(currentFee * 100),
+          ref: ref,
+          callback_url: callbackUrl,
+        });
+        window.location.href = `https://checkout.paystack.com/pay?${params.toString()}`;
+      }
+    }
   };
 
   return (
@@ -249,8 +280,9 @@ export default function RegisterPage() {
 
       {/* Main card */}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-xl max-w-2xl w-full p-6 md:p-8">
-        {/* Stepper Header */}
-        <div className="flex items-center justify-between mb-8 overflow-x-auto py-2 custom-scrollbar">
+        <>
+            {/* Stepper Header */}
+            <div className="flex items-center justify-between mb-8 overflow-x-auto py-2 custom-scrollbar">
           {[1, 2, 3, 4].map((s) => (
             <React.Fragment key={s}>
               <div className="flex items-center gap-2">
@@ -854,92 +886,11 @@ export default function RegisterPage() {
             )}
           </div>
         </form>
+        </>
       </div>
 
-      {/* Paystack Simulation Overlay */}
-      {showPaystackOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            {/* Header */}
-            <div className="bg-slate-900 text-white p-5 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400 font-extrabold text-lg tracking-wider">paystack</span>
-                <span className="text-xs px-2 py-0.5 bg-slate-800 text-slate-400 rounded">SIMULATOR</span>
-              </div>
-              <button
-                onClick={() => {
-                  if (!isPaying) setShowPaystackOverlay(false);
-                }}
-                className="text-slate-400 hover:text-white"
-                disabled={isPaying}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 flex flex-col gap-5">
-              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div>
-                  <p className="text-xs text-slate-500 font-semibold uppercase">Paying To</p>
-                  <p className="text-sm font-bold text-slate-800">MSSN Ikeja Area Council</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500 font-semibold uppercase">Amount</p>
-                  <p className="text-base font-extrabold text-slate-800">₦{currentFee.toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase">Card Number</label>
-                  <input
-                    type="text"
-                    disabled
-                    value="4000 1234 5678 9010"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono text-sm focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">Expiry Date</label>
-                    <input
-                      type="text"
-                      disabled
-                      value="12/28"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono text-sm focus:outline-none"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">CVV</label>
-                    <input
-                      type="password"
-                      disabled
-                      value="123"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono text-sm focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {isPaying ? (
-                <div className="py-4 flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-slate-500 font-bold">Authorizing transaction on Paystack network...</p>
-                </div>
-              ) : (
-                <button
-                  onClick={simulateSuccessPayment}
-                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-lg hover:shadow-emerald-500/10 transition-all text-sm flex items-center justify-center gap-2"
-                >
-                  Confirm & Pay ₦{currentFee.toLocaleString()}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Paystack inline SDK script */}
+      <script src="https://js.paystack.co/v1/inline.js" async />
     </div>
   );
 }
