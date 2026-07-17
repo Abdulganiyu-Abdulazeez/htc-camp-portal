@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppState } from "@/context/app-state";
 import { CheckCircle, XCircle, Loader2, AlertTriangle } from "lucide-react";
 
 type VerifyState = "verifying" | "success" | "failed" | "error";
 
-export default function PaymentCallbackPage() {
+function PaymentCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { confirmPayment, loginAsDelegate } = useAppState();
@@ -164,5 +164,35 @@ export default function PaymentCallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-10">
+          <div className="flex flex-col items-center gap-2 mb-8 text-center">
+            <img
+              src="/mss-ikeja-logo.png"
+              alt="MSSN Ikeja Logo"
+              className="w-14 h-14 object-contain"
+            />
+            <h1 className="text-xl font-extrabold text-primary tracking-tight">MSSN Ikeja HTC Portal</h1>
+          </div>
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-xl max-w-md w-full p-8 flex flex-col items-center gap-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Loader2 className="w-10 h-10 text-primary animate-spin" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-extrabold text-on-surface">Loading…</h2>
+              <p className="text-sm text-on-surface-variant">Preparing payment verification details...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <PaymentCallbackContent />
+    </Suspense>
   );
 }
