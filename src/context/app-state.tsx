@@ -89,14 +89,14 @@ interface AppStateContextType {
   transactions: PaystackTransaction[];
   registerDelegate: (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => Delegate;
   updateDelegate: (reference: string, data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => Delegate;
-  confirmPayment: (reference: string) => void;
-  overridePayment: (reference: string) => void;
+  confirmPayment: (reference: string) => Promise<void>;
+  overridePayment: (reference: string) => Promise<void>;
   assignGroup: (delegateId: string, groupName: string, roomName: string) => void;
   autoGroupDelegates: () => void;
   sendBulkEmail: (subject: string, body: string, recipientIds: string[], onProgress: (progress: number) => void) => Promise<void>;
   loginAsAdmin: (email: string, password: string) => boolean;
   logoutAdmin: () => void;
-  loginAsDelegate: (identifier: string) => boolean; // identifier can be email or reference
+  loginAsDelegate: (identifier: string) => Promise<boolean>; // identifier can be email or reference
   logoutDelegate: () => void;
   updateSettings: (newSettings: Partial<CampSettings>) => void;
   addAdministrator: (fullName: string, email: string, role: "Super Admin" | "Registry") => Promise<void>;
@@ -736,8 +736,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const overridePayment = (reference: string) => {
-    confirmPayment(reference);
+  const overridePayment = async (reference: string) => {
+    await confirmPayment(reference);
   };
 
   const assignGroup = (delegateId: string, groupName: string, roomName: string) => {
@@ -1125,8 +1125,37 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const loginAsDelegate = (identifier: string) => {
+  const loginAsDelegate = async (identifier: string) => {
     const clean = identifier.trim().toLowerCase();
+    
+    // First try to fetch fresh from Supabase if online
+    if (hasSupabase) {
+      try {
+        const { data, error } = await supabase
+          .from("delegates")
+          .select("*")
+          .or(`email.ilike.${clean},reference.ilike.${clean},id.ilike.${clean},phone.eq.${identifier.trim()}`)
+          .maybeSingle();
+
+        if (!error && data) {
+          // Update local delegates state with this fresh delegate
+          setDelegates((prev) => {
+            const exists = prev.some((x) => x.reference === data.reference);
+            if (exists) {
+              return prev.map((x) => (x.reference === data.reference ? data : x));
+            } else {
+              return [data, ...prev];
+            }
+          });
+          setCurrentDelegate(data);
+          return true;
+        }
+      } catch (err) {
+        console.error("Error logging in delegate via Supabase:", err);
+      }
+    }
+
+    // Fallback to local state search
     const delegate = delegates.find(
       (d) =>
         d.email.toLowerCase() === clean ||

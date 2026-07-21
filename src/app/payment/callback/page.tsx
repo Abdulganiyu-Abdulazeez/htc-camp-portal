@@ -37,9 +37,9 @@ function PaymentCallbackContent() {
         const data = await res.json();
 
         if (data.status && data.data?.paymentStatus === "success") {
-          // Mark payment confirmed in our state
-          confirmPayment(ref);
-          loginAsDelegate(ref);
+          // Mark payment confirmed in our state and database
+          await confirmPayment(ref);
+          await loginAsDelegate(ref);
           setState("success");
           setMessage(`Payment of ₦${Number(data.data.amount).toLocaleString()} confirmed via ${data.data.channel || "card"}.`);
 

@@ -1,11 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useAppState } from "@/context/app-state";
 import { AlertCircle, CalendarClock, Info } from "lucide-react";
 
 export default function DelegateDashboardPage() {
-  const { currentDelegate, settings } = useAppState();
+  const { currentDelegate, settings, confirmPayment } = useAppState();
+
+  useEffect(() => {
+    if (currentDelegate && currentDelegate.paymentStatus === "pending") {
+      const checkPaymentStatus = async () => {
+        try {
+          const res = await fetch(`/api/paystack/verify?reference=${encodeURIComponent(currentDelegate.reference)}`);
+          const data = await res.json();
+          if (data.status && data.data?.paymentStatus === "success") {
+            await confirmPayment(currentDelegate.reference);
+          }
+        } catch (e) {
+          console.error("Error checking payment status in dashboard background:", e);
+        }
+      };
+
+      checkPaymentStatus();
+
+      const interval = setInterval(checkPaymentStatus, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [currentDelegate, confirmPayment]);
 
   if (!currentDelegate) return null;
 

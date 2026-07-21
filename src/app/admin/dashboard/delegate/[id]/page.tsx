@@ -5,6 +5,7 @@ import { useAppState, getDelegateFee } from "@/context/app-state";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  ArrowRight,
   CreditCard,
   ShieldCheck,
   ShieldAlert,
@@ -16,6 +17,7 @@ import {
   MapPin,
   Calendar,
   AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
 
 export default function DelegateDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -47,18 +49,30 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  // Processor lookup simulator
-  const handleLookupReference = () => {
+  // Real Paystack verification lookup
+  const handleLookupReference = async () => {
+    const targetRef = paystackLookupRef.trim() || delegate.reference;
+    if (!targetRef) return;
     setIsVerifyingRef(true);
     setPaystackFound(null);
-    setTimeout(() => {
+    try {
+      const res = await fetch(`/api/paystack/verify?reference=${encodeURIComponent(targetRef)}`);
+      const data = await res.json();
+      if (data.status && data.data?.paymentStatus === "success") {
+        setPaystackFound(true);
+      } else {
+        setPaystackFound(false);
+      }
+    } catch (e) {
+      console.error("Error looking up reference:", e);
+      setPaystackFound(false);
+    } finally {
       setIsVerifyingRef(false);
-      setPaystackFound(true);
-    }, 1000);
+    }
   };
 
-  const handleManualOverride = () => {
-    overridePayment(delegate.reference);
+  const handleManualOverride = async () => {
+    await overridePayment(delegate.reference);
     setPaystackLookupRef("");
     setPaystackFound(null);
   };
@@ -370,10 +384,17 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
                     </button>
                   </div>
 
-                  {paystackFound && (
+                  {paystackFound === true && (
                     <div className="p-2.5 bg-success/15 border border-success/20 text-success rounded text-[11px] font-semibold flex items-center gap-1.5 animate-fade-in">
                       <ShieldCheck className="w-4 h-4 text-success" />
                       Processor confirmed transaction!
+                    </div>
+                  )}
+
+                  {paystackFound === false && (
+                    <div className="p-2.5 bg-error/15 border border-error/20 text-error rounded text-[11px] font-semibold flex items-center gap-1.5 animate-fade-in">
+                      <AlertCircle className="w-4 h-4 text-error shrink-0 animate-pulse" />
+                      No successful payment found on processor!
                     </div>
                   )}
 

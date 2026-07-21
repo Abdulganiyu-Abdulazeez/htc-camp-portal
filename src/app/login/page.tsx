@@ -55,15 +55,15 @@ export default function UnifiedLoginPage() {
     } else {
       // Normal delegate login attempt
       setIsSubmitting(true);
-      setTimeout(() => {
-        const success = loginAsDelegate(trimmedInput);
+      (async () => {
+        const success = await loginAsDelegate(trimmedInput);
         setIsSubmitting(false);
         if (success) {
           router.push("/dashboard");
         } else {
           setErrorMsg("No registration found with this email or reference ID.");
         }
-      }, 600);
+      })();
     }
   };
 
@@ -72,8 +72,8 @@ export default function UnifiedLoginPage() {
     setIsSubmitting(true);
     setErrorMsg("");
 
-    setTimeout(() => {
-      const success = loginAsDelegate(trimmedInput);
+    (async () => {
+      const success = await loginAsDelegate(trimmedInput);
       setIsSubmitting(false);
       if (success) {
         router.push("/dashboard");
@@ -81,7 +81,7 @@ export default function UnifiedLoginPage() {
         setErrorMsg("No delegate registration profile found for this administrator email.");
         setLoginStep("input");
       }
-    }, 600);
+    })();
   };
 
   const handleChooseAdmin = () => {
