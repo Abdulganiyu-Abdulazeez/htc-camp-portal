@@ -724,10 +724,10 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       })
         .then(async (res) => {
           if (res.ok) {
-            console.log(`Successfully sent registration confirmation email to ${updated.email}`);
+            console.log(`Successfully triggered registration confirmation email for ${updated.email}`);
           } else {
             const err = await res.json();
-            console.error("Resend API email dispatch failed:", err);
+            console.warn("Email API response:", err);
           }
         })
         .catch((err) => {
