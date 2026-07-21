@@ -26,8 +26,17 @@ interface DashboardNavProps {
 export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentDelegate, currentAdmin, logoutDelegate, logoutAdmin } = useAppState();
+  const { currentDelegate, currentAdmin, logoutDelegate, logoutAdmin, announcements } = useAppState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const activeAnnouncementsCount = isAdmin ? 0 : (announcements || []).filter((ann) => {
+    if (ann.status !== "Published") return false;
+    if (ann.expiryDate) {
+      const expiry = new Date(ann.expiryDate);
+      if (expiry < new Date()) return false;
+    }
+    return true;
+  }).length;
 
   const getInitials = (name: string) => {
     return name
@@ -184,14 +193,23 @@ export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`w-full px-4 py-3 rounded-lg text-left text-sm font-bold flex items-center gap-3 transition-colors ${
+                    className={`w-full px-4 py-3 rounded-lg text-left text-sm font-bold flex items-center justify-between transition-colors ${
                       active
                         ? "bg-primary text-white"
                         : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    {link.label}
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-5 h-5" />
+                      {link.label}
+                    </div>
+                    {link.href === "/dashboard/announcements" && activeAnnouncementsCount > 0 && (
+                      <span className={`px-2 py-0.5 text-[9px] font-extrabold rounded-full ${
+                        active ? "bg-white text-primary" : "bg-error text-white"
+                      }`}>
+                        {activeAnnouncementsCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -257,14 +275,23 @@ export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`w-full px-4 py-3 rounded-lg text-left text-sm font-bold flex items-center gap-3 transition-all ${
+                className={`w-full px-4 py-3 rounded-lg text-left text-sm font-bold flex items-center justify-between transition-all ${
                   active
                     ? "bg-primary text-white shadow-md shadow-primary/10 scale-[1.02]"
                     : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                {link.label}
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5" />
+                  {link.label}
+                </div>
+                {link.href === "/dashboard/announcements" && activeAnnouncementsCount > 0 && (
+                  <span className={`px-2 py-0.5 text-[9px] font-extrabold rounded-full ${
+                    active ? "bg-white text-primary" : "bg-error text-white"
+                  }`}>
+                    {activeAnnouncementsCount}
+                  </span>
+                )}
               </Link>
             );
           })}

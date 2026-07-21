@@ -1,25 +1,28 @@
+-- WARNING: Running this script with DROP TABLE enabled will completely WIPE all your production data!
+-- Only uncomment the DROP TABLE lines if you are setting up a fresh local or testing database.
+
 -- Clean up existing policies and tables to prevent "already exists" errors
 DROP POLICY IF EXISTS "Allow public insert to delegates" ON public.delegates;
 DROP POLICY IF EXISTS "Allow public select of delegates" ON public.delegates;
 DROP POLICY IF EXISTS "Allow public update of delegates" ON public.delegates;
 DROP POLICY IF EXISTS "Allow public delete of delegates" ON public.delegates;
-DROP TABLE IF EXISTS public.delegates CASCADE;
+-- DROP TABLE IF EXISTS public.delegates CASCADE;
 
 DROP POLICY IF EXISTS "Allow public select of settings" ON public.settings;
 DROP POLICY IF EXISTS "Allow public update of settings" ON public.settings;
-DROP TABLE IF EXISTS public.settings CASCADE;
+-- DROP TABLE IF EXISTS public.settings CASCADE;
 
 DROP POLICY IF EXISTS "Allow public insert to administrators" ON public.administrators;
 DROP POLICY IF EXISTS "Allow public select of administrators" ON public.administrators;
 DROP POLICY IF EXISTS "Allow public update of administrators" ON public.administrators;
 DROP POLICY IF EXISTS "Allow public delete of administrators" ON public.administrators;
-DROP TABLE IF EXISTS public.administrators CASCADE;
+-- DROP TABLE IF EXISTS public.administrators CASCADE;
 
 DROP POLICY IF EXISTS "Allow public insert to announcements" ON public.announcements;
 DROP POLICY IF EXISTS "Allow public select of announcements" ON public.announcements;
 DROP POLICY IF EXISTS "Allow public update of announcements" ON public.announcements;
 DROP POLICY IF EXISTS "Allow public delete of announcements" ON public.announcements;
-DROP TABLE IF EXISTS public.announcements CASCADE;
+-- DROP TABLE IF EXISTS public.announcements CASCADE;
 
 -- Create delegates table
 create table public.delegates (
