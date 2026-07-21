@@ -191,6 +191,8 @@ export default function RegisterPage() {
   const [loadedReference, setLoadedReference] = useState("");
   const [pendingMessage, setPendingMessage] = useState("");
   const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
     fullName: "",
     email: "",
     phone: "",
@@ -242,6 +244,9 @@ export default function RegisterPage() {
   useEffect(() => {
     const emailLower = formData.email.trim().toLowerCase();
     const phoneTrim = formData.phone.trim();
+    const firstLower = formData.firstName.trim().toLowerCase();
+    const lastLower = formData.lastName.trim().toLowerCase();
+    const fullLower = `${firstLower} ${lastLower}`.trim();
 
     const isEmailValid = emailLower && /\S+@\S+\.\S+/.test(emailLower);
     const isPhoneValid = phoneTrim && phoneTrim.length >= 10;
@@ -253,17 +258,41 @@ export default function RegisterPage() {
     }
 
     const match = delegates.find((d) => {
-      if (isEmailValid && d.email.toLowerCase() === emailLower) return true;
-      if (isPhoneValid && d.phone === phoneTrim) return true;
+      const dEmailLower = d.email.toLowerCase();
+      const dFull = d.fullName.toLowerCase().trim();
+      const dParts = dFull.split(/\s+/);
+      const dFirst = dParts[0] || "";
+      const dLast = dParts.slice(1).join(" ") || "";
+
+      if (isEmailValid && !d.email.includes("@htc-temp.com") && dEmailLower === emailLower) {
+        return true;
+      }
+
+      if (isPhoneValid && d.phone === phoneTrim) {
+        if (fullLower) {
+          if (dFull === fullLower) return true;
+          if (firstLower && lastLower && dFirst === firstLower && dLast === lastLower) return true;
+        }
+      }
+
       return false;
     });
 
     if (match) {
+      const emailMatches = isEmailValid && !match.email.includes("@htc-temp.com") && match.email.toLowerCase() === emailLower;
+      const dFull = match.fullName.toLowerCase().trim();
+      const dParts = dFull.split(/\s+/);
+      const dFirst = dParts[0] || "";
+      const dLast = dParts.slice(1).join(" ") || "";
+      const phoneAndNameMatches = isPhoneValid && match.phone === phoneTrim && (
+        !fullLower || dFull === fullLower || (firstLower && lastLower && dFirst === firstLower && dLast === lastLower)
+      );
+
       if (match.paymentStatus === "verified") {
         setErrors((prev) => ({
           ...prev,
-          email: isEmailValid && match.email.toLowerCase() === emailLower ? "This email has already registered and payment has been verified." : prev.email,
-          phone: isPhoneValid && match.phone === phoneTrim ? "This phone number has already registered and payment has been verified." : prev.phone,
+          ...(emailMatches ? { email: "This email has already registered and payment has been verified." } : {}),
+          ...(phoneAndNameMatches ? { phone: "This delegate (First & Last Name + Phone) has already registered and payment has been verified." } : {}),
         }));
         setLoadedReference("");
         setPendingMessage("");
@@ -273,9 +302,15 @@ export default function RegisterPage() {
           
           const isPlaceholder = match.email.includes("@htc-temp.com");
           const loadedEmail = isPlaceholder ? "" : match.email;
-          setPendingMessage(`We found a pending registration for this ${isPlaceholder ? "phone number" : "email"}. Your details have been loaded below. You can edit them and complete payment.`);
+          setPendingMessage(`We found a pending registration for ${match.fullName}. Your details have been loaded below. You can edit them and complete payment.`);
           
+          const nameParts = (match.fullName || "").trim().split(/\s+/);
+          const loadedFirst = nameParts[0] || "";
+          const loadedLast = nameParts.slice(1).join(" ") || "";
+
           setFormData({
+            firstName: loadedFirst,
+            lastName: loadedLast,
             fullName: match.fullName || "",
             email: loadedEmail || "",
             phone: match.phone || "",
@@ -334,7 +369,7 @@ export default function RegisterPage() {
         setPendingMessage("");
       }
     }
-  }, [formData.email, formData.phone, delegates, loadedReference]);
+  }, [formData.email, formData.phone, formData.firstName, formData.lastName, delegates, loadedReference]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -342,7 +377,13 @@ export default function RegisterPage() {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData((prev) => ({ ...prev, [name]: checked }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => {
+        const next = { ...prev, [name]: value };
+        if (name === "firstName" || name === "lastName") {
+          next.fullName = `${next.firstName || ""} ${next.lastName || ""}`.trim();
+        }
+        return next;
+      });
     }
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
@@ -356,7 +397,8 @@ export default function RegisterPage() {
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
-      if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
+      if (!formData.firstName.trim()) newErrors.firstName = "First name is required.";
+      if (!formData.lastName.trim()) newErrors.lastName = "Last name is required.";
       if (formData.email.trim()) {
         if (!/\S+@\S+\.\S+/.test(formData.email)) {
           newErrors.email = "Please enter a valid email address.";
@@ -594,23 +636,43 @@ export default function RegisterPage() {
                 <h3 className="text-lg font-bold text-primary">Personal Details</h3>
                 <p className="text-xs text-on-surface-variant">Provide your basic contact information.</p>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-on-surface-variant">Full Name (First & Last Name)</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="e.g. Abdullah Danjuma"
-                    className={`w-full px-4 py-3 bg-surface-container rounded-lg border ${errors.fullName ? "border-error focus:ring-error/20" : "border-outline-variant focus:border-primary focus:ring-accent/20"
-                      } focus:outline-none focus:ring-4 transition-all text-sm`}
-                  />
-                  {errors.fullName && (
-                    <p className="text-xs text-error font-medium flex items-center gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {errors.fullName}
-                    </p>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-on-surface-variant">First Name</label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      placeholder="e.g. Abdullah"
+                      className={`w-full px-4 py-3 bg-surface-container rounded-lg border ${errors.firstName ? "border-error focus:ring-error/20" : "border-outline-variant focus:border-primary focus:ring-accent/20"
+                        } focus:outline-none focus:ring-4 transition-all text-sm`}
+                    />
+                    {errors.firstName && (
+                      <p className="text-xs text-error font-medium flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        {errors.firstName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-on-surface-variant">Last Name / Surname</label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      placeholder="e.g. Danjuma"
+                      className={`w-full px-4 py-3 bg-surface-container rounded-lg border ${errors.lastName ? "border-error focus:ring-error/20" : "border-outline-variant focus:border-primary focus:ring-accent/20"
+                        } focus:outline-none focus:ring-4 transition-all text-sm`}
+                    />
+                    {errors.lastName && (
+                      <p className="text-xs text-error font-medium flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        {errors.lastName}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
