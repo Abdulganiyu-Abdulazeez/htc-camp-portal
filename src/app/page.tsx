@@ -155,7 +155,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/75 to-slate-950/85 z-0" />
         
         {/* Relative content container */}
-        <div className="relative z-10 max-w-4xl mx-auto w-full flex flex-col items-center gap-8 text-white">
+        <div className="relative z-10 max-w-5xl mx-auto w-full flex flex-col items-center gap-8 text-white">
           <h2 className="w-full text-4xl md:text-6xl font-extrabold leading-tight tracking-tight text-white">
             Holiday Training Course (HTC '26) <br />
             <span className="text-primary bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">The Credible Maestro</span>
