@@ -33,6 +33,7 @@ export interface Delegate {
   assignedRoom: string;  // e.g. "Room 4", "None"
   createdAt: string;
   skillOfInterest: string;
+  promoCode?: string;
 }
 
 export interface CampSettings {
@@ -87,6 +88,7 @@ interface AppStateContextType {
   announcements: Announcement[];
   transactions: PaystackTransaction[];
   registerDelegate: (data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => Delegate;
+  updateDelegate: (reference: string, data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">) => Delegate;
   confirmPayment: (reference: string) => void;
   overridePayment: (reference: string) => void;
   assignGroup: (delegateId: string, groupName: string, roomName: string) => void;
@@ -152,15 +154,20 @@ export const getDelegateFee = (
   category: string,
   yearOfStudy?: string,
   campFeeSecondary: number = 4000,
-  campFeeUndergrad: number = 6000
+  campFeeUndergrad: number = 6000,
+  promoCode?: string
 ) => {
+  let baseFee = campFeeUndergrad;
   if (category === "Secondary School") {
-    return campFeeSecondary;
+    baseFee = campFeeSecondary;
+  } else if (category === "Undergraduate/Leaver" && yearOfStudy === "Prospective Candidate") {
+    baseFee = campFeeSecondary;
   }
-  if (category === "Undergraduate/Leaver" && yearOfStudy === "Prospective Candidate") {
-    return campFeeSecondary;
+
+  if (promoCode && promoCode.trim() !== "") {
+    return baseFee / 2;
   }
-  return campFeeUndergrad;
+  return baseFee;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
@@ -185,7 +192,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         reference: d.reference,
         delegateName: d.fullName,
         delegateEmail: d.email,
-        amount: getDelegateFee(d.category, d.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad),
+        amount: getDelegateFee(d.category, d.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad, d.promoCode),
         status: "success" as const,
         channel: "card",
         createdAt: d.createdAt,
@@ -481,139 +488,243 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return newDelegate;
   };
-
-  const confirmPayment = (reference: string) => {
-    let updatedDelegate: Delegate | null = null;
+  
+  const updateDelegate = (
+    reference: string,
+    data: Omit<Delegate, "id" | "reference" | "paymentStatus" | "assignedGroup" | "assignedRoom" | "createdAt">
+  ) => {
+    const existing = delegates.find(d => d.reference === reference);
+    if (!existing) {
+      throw new Error(`Delegate with reference ${reference} not found`);
+    }
+    const updatedDelegate: Delegate = {
+      ...existing,
+      ...data,
+    };
 
     setDelegates((prev) =>
-      prev.map((d) => {
-        if (d.reference === reference && d.paymentStatus === "pending") {
-          const nextHtcNumber = prev.filter(x => x.id.startsWith("HTC-")).length + 1;
-          const formattedNumber = String(nextHtcNumber).padStart(4, "0");
-          const newId = `HTC-2026-${formattedNumber}`;
-          
-          let assignedGroup = "None";
-          let assignedRoom = "None";
-
-          // If auto-grouping is enabled, allocate
-          if (settings.autoGroupingEnabled) {
-            const groupCounts: Record<string, number> = {};
-            const categoryGroupCounts: Record<string, Record<string, number>> = {};
-            const allHouses = [
-              "Abu Bakr", "Umar", "Uthman", "Ali",
-              "Aisha", "Khadijah", "Fatimah", "Zaynab"
-            ];
-            allHouses.forEach(h => {
-              groupCounts[h] = 0;
-              categoryGroupCounts[h] = {
-                "Secondary School": 0,
-                "Undergraduate/Leaver": 0,
-                "Others": 0
-              };
-            });
-            prev.forEach(x => {
-              if (x.assignedGroup && x.assignedGroup !== "None" && allHouses.includes(x.assignedGroup)) {
-                groupCounts[x.assignedGroup]++;
-                const cat = x.category || "Others";
-                if (!categoryGroupCounts[x.assignedGroup][cat]) {
-                  categoryGroupCounts[x.assignedGroup][cat] = 0;
-                }
-                categoryGroupCounts[x.assignedGroup][cat]++;
-              }
-            });
-
-            const candidates = d.gender === "Male"
-              ? ["Abu Bakr", "Umar", "Uthman", "Ali"]
-              : ["Aisha", "Khadijah", "Fatimah", "Zaynab"];
-
-            let bestGroup = candidates[0];
-            let minCategoryCount = Infinity;
-            let minOverallCount = Infinity;
-
-            for (const group of candidates) {
-              const cat = d.category || "Others";
-              const catCount = categoryGroupCounts[group][cat] || 0;
-              const overallCount = groupCounts[group] || 0;
-
-              if (catCount < minCategoryCount) {
-                minCategoryCount = catCount;
-                minOverallCount = overallCount;
-                bestGroup = group;
-              } else if (catCount === minCategoryCount) {
-                if (overallCount < minOverallCount) {
-                  minOverallCount = overallCount;
-                  bestGroup = group;
-                }
-              }
-            }
-            assignedGroup = bestGroup;
-          }
-
-          const updated = {
-            ...d,
-            id: newId,
-            paymentStatus: "verified" as const,
-            assignedGroup,
-            assignedRoom,
-          };
-
-          updatedDelegate = updated;
-          
-          if (currentDelegate && currentDelegate.reference === reference) {
-            setCurrentDelegate(updated);
-          }
-          return updated;
-        }
-        return d;
-      })
+      prev.map((d) => (d.reference === reference ? updatedDelegate : d))
     );
 
-    // Async write to Supabase
-    if (hasSupabase && updatedDelegate) {
-      const { id, paymentStatus, assignedGroup, assignedRoom } = updatedDelegate;
+    if (hasSupabase) {
       supabase
         .from("delegates")
         .update({
-          id,
-          paymentStatus,
-          assignedGroup,
-          assignedRoom
+          fullName: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          gender: data.gender,
+          category: data.category,
+          school: data.school,
+          secondaryDistrict: data.secondaryDistrict ?? null,
+          secondaryClass: data.secondaryClass ?? null,
+          courseOfStudy: data.courseOfStudy ?? null,
+          yearOfStudy: data.yearOfStudy ?? null,
+          jobTitle: data.jobTitle ?? null,
+          employmentMode: data.employmentMode ?? null,
+          medicalCondition: data.medicalCondition,
+          nutAllergy: data.nutAllergy,
+          lactoseIntolerance: data.lactoseIntolerance,
+          medicationAllergy: data.medicationAllergy,
+          otherAllergies: data.otherAllergies ?? null,
+          chronicConditions: data.chronicConditions ?? null,
+          bloodGroup: data.bloodGroup ?? null,
+          genotype: data.genotype ?? null,
+          emergencyContactName: data.emergencyContactName,
+          emergencyContactPhone: data.emergencyContactPhone,
+          skillOfInterest: data.skillOfInterest,
+          promoCode: data.promoCode ?? null,
         })
         .eq("reference", reference)
         .then(({ error }) => {
           if (error) {
-            console.error(`Failed to sync payment confirmation to Supabase for reference ${reference}:`, error);
+            console.error("Failed to update registered delegate in Supabase:", error);
           } else {
-            console.log(`Successfully synced payment confirmation to Supabase for reference ${reference}.`);
+            console.log("Successfully updated registered delegate in Supabase.");
           }
         });
     }
 
-    // Trigger confirmation email dispatch via Next.js API route
-    if (updatedDelegate) {
-      const delegate: Delegate = updatedDelegate;
-      const fee = getDelegateFee(delegate.category, delegate.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad);
+    return updatedDelegate;
+  };
+
+  const confirmPayment = async (reference: string) => {
+    // If delegates list is empty (e.g. on callback page reload), load it first
+    let currentDelegates = delegates;
+    if (currentDelegates.length === 0 && hasSupabase) {
+      const { data, error } = await supabase
+        .from("delegates")
+        .select("*")
+        .order("createdAt", { ascending: false });
+      if (!error && data) {
+        currentDelegates = data;
+        setDelegates(data);
+      }
+    }
+
+    // Find the delegate
+    let d = currentDelegates.find((x) => x.reference === reference);
+    if (!d && hasSupabase) {
+      const { data, error } = await supabase
+        .from("delegates")
+        .select("*")
+        .eq("reference", reference)
+        .single();
+      if (!error && data) {
+        d = data;
+      }
+    }
+
+    if (!d) {
+      console.error(`Delegate with reference ${reference} not found in state or database`);
+      return;
+    }
+
+    if (d.paymentStatus === "verified") {
+      console.log(`Delegate ${reference} is already verified.`);
+      return;
+    }
+
+    // Compute accurate HTC number directly from the database to prevent duplicate IDs
+    let nextHtcNumber = 1;
+    if (hasSupabase) {
+      const { count, error } = await supabase
+        .from("delegates")
+        .select("*", { count: "exact", head: true })
+        .like("id", "HTC-%");
+      if (!error && count !== null) {
+        nextHtcNumber = count + 1;
+      } else {
+        nextHtcNumber = currentDelegates.filter(x => x.id.startsWith("HTC-")).length + 1;
+      }
+    } else {
+      nextHtcNumber = currentDelegates.filter(x => x.id.startsWith("HTC-")).length + 1;
+    }
+    const formattedNumber = String(nextHtcNumber).padStart(4, "0");
+    const newId = `HTC-2026-${formattedNumber}`;
+
+    let assignedGroup = "None";
+    let assignedRoom = "None";
+
+    // If auto-grouping is enabled, allocate
+    if (settings.autoGroupingEnabled) {
+      const groupCounts: Record<string, number> = {};
+      const categoryGroupCounts: Record<string, Record<string, number>> = {};
+      const allHouses = [
+        "Abu Bakr", "Umar", "Uthman", "Ali",
+        "Aisha", "Khadijah", "Fatimah", "Zaynab"
+      ];
+      allHouses.forEach(h => {
+        groupCounts[h] = 0;
+        categoryGroupCounts[h] = {
+          "Secondary School": 0,
+          "Undergraduate/Leaver": 0,
+          "Others": 0
+        };
+      });
+      currentDelegates.forEach(x => {
+        if (x.assignedGroup && x.assignedGroup !== "None" && allHouses.includes(x.assignedGroup)) {
+          groupCounts[x.assignedGroup]++;
+          const cat = x.category || "Others";
+          if (!categoryGroupCounts[x.assignedGroup][cat]) {
+            categoryGroupCounts[x.assignedGroup][cat] = 0;
+          }
+          categoryGroupCounts[x.assignedGroup][cat]++;
+        }
+      });
+
+      const candidates = d.gender === "Male"
+        ? ["Abu Bakr", "Umar", "Uthman", "Ali"]
+        : ["Aisha", "Khadijah", "Fatimah", "Zaynab"];
+
+      let bestGroup = candidates[0];
+      let minCategoryCount = Infinity;
+      let minOverallCount = Infinity;
+
+      for (const group of candidates) {
+        const cat = d.category || "Others";
+        const catCount = categoryGroupCounts[group][cat] || 0;
+        const overallCount = groupCounts[group] || 0;
+
+        if (catCount < minCategoryCount) {
+          minCategoryCount = catCount;
+          minOverallCount = overallCount;
+          bestGroup = group;
+        } else if (catCount === minCategoryCount) {
+          if (overallCount < minOverallCount) {
+            minOverallCount = overallCount;
+            bestGroup = group;
+          }
+        }
+      }
+      assignedGroup = bestGroup;
+    }
+
+    const updated: Delegate = {
+      ...d,
+      id: newId,
+      paymentStatus: "verified" as const,
+      assignedGroup,
+      assignedRoom,
+    };
+
+    // Update state
+    setDelegates((prev) => {
+      const exists = prev.some((x) => x.reference === reference);
+      if (exists) {
+        return prev.map((x) => (x.reference === reference ? updated : x));
+      } else {
+        return [updated, ...prev];
+      }
+    });
+
+    if (currentDelegate && currentDelegate.reference === reference) {
+      setCurrentDelegate(updated);
+    }
+
+    // Async write to Supabase
+    if (hasSupabase) {
+      const { error } = await supabase
+        .from("delegates")
+        .update({
+          id: newId,
+          paymentStatus: "verified",
+          assignedGroup,
+          assignedRoom
+        })
+        .eq("reference", reference);
+
+      if (error) {
+        console.error(`Failed to sync payment confirmation to Supabase for reference ${reference}:`, error);
+      } else {
+        console.log(`Successfully synced payment confirmation to Supabase for reference ${reference}.`);
+      }
+    }
+
+    // Trigger confirmation email dispatch via Next.js API route if email is NOT placeholder
+    if (updated.email && !updated.email.includes("@htc-temp.com")) {
+      const fee = getDelegateFee(updated.category, updated.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad, updated.promoCode);
       fetch("/api/send-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: delegate.email,
-          name: delegate.fullName,
-          reference: delegate.reference,
+          email: updated.email,
+          name: updated.fullName,
+          reference: updated.reference,
           amount: fee,
-          category: delegate.category,
-          group: delegate.assignedGroup,
-          delegateId: delegate.id,
-          houseName: delegate.assignedGroup,
-          delegateEmail: delegate.email,
-          delegateName: delegate.fullName,
+          category: updated.category,
+          group: updated.assignedGroup,
+          delegateId: updated.id,
+          houseName: updated.assignedGroup,
+          delegateEmail: updated.email,
+          delegateName: updated.fullName,
         }),
       })
         .then(async (res) => {
           if (res.ok) {
-            console.log(`Successfully sent registration confirmation email to ${delegate.email}`);
+            console.log(`Successfully sent registration confirmation email to ${updated.email}`);
           } else {
             const err = await res.json();
             console.error("Resend API email dispatch failed:", err);
@@ -630,28 +741,22 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const assignGroup = (delegateId: string, groupName: string, roomName: string) => {
-    let updatedDelegate: Delegate | null = null;
+    const d = delegates.find(x => x.id === delegateId);
+    if (!d) return;
 
-    setDelegates((prev) =>
-      prev.map((d) => {
-        if (d.id === delegateId) {
-          const updated = {
-            ...d,
-            assignedGroup: groupName,
-            assignedRoom: roomName,
-          };
-          updatedDelegate = updated;
-          if (currentDelegate && currentDelegate.id === delegateId) {
-            setCurrentDelegate(updated);
-          }
-          return updated;
-        }
-        return d;
-      })
-    );
+    const updated = {
+      ...d,
+      assignedGroup: groupName,
+      assignedRoom: roomName,
+    };
 
-    // Async write to Supabase
-    if (hasSupabase && updatedDelegate) {
+    setDelegates((prev) => prev.map((x) => (x.id === delegateId ? updated : x)));
+
+    if (currentDelegate && currentDelegate.id === delegateId) {
+      setCurrentDelegate(updated);
+    }
+
+    if (hasSupabase) {
       supabase
         .from("delegates")
         .update({
@@ -670,93 +775,94 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const autoGroupDelegates = () => {
-    const updatedDelegatesList: Delegate[] = [];
-
-    setDelegates((prev) => {
-      const groupCounts: Record<string, number> = {};
-      const categoryGroupCounts: Record<string, Record<string, number>> = {};
-      const allHouses = [
-        "Abu Bakr", "Umar", "Uthman", "Ali",
-        "Aisha", "Khadijah", "Fatimah", "Zaynab"
-      ];
-      allHouses.forEach(h => {
-        groupCounts[h] = 0;
-        categoryGroupCounts[h] = {
-          "Secondary School": 0,
-          "Undergraduate/Leaver": 0,
-          "Others": 0
-        };
-      });
-      prev.forEach(x => {
-        if (x.assignedGroup && x.assignedGroup !== "None" && allHouses.includes(x.assignedGroup)) {
-          groupCounts[x.assignedGroup]++;
-          const cat = x.category || "Others";
-          if (!categoryGroupCounts[x.assignedGroup][cat]) {
-            categoryGroupCounts[x.assignedGroup][cat] = 0;
-          }
-          categoryGroupCounts[x.assignedGroup][cat]++;
-        }
-      });
-
-      const updated = prev.map((d) => {
-        if (d.paymentStatus === "verified" && d.assignedGroup === "None") {
-          let assignedGroup = "None";
-          let assignedRoom = "None";
-          
-          const candidates = d.gender === "Male"
-            ? ["Abu Bakr", "Umar", "Uthman", "Ali"]
-            : ["Aisha", "Khadijah", "Fatimah", "Zaynab"];
-
-          let bestGroup = candidates[0];
-          let minCategoryCount = Infinity;
-          let minOverallCount = Infinity;
-
-          for (const group of candidates) {
-            const cat = d.category || "Others";
-            const catCount = categoryGroupCounts[group][cat] || 0;
-            const overallCount = groupCounts[group] || 0;
-
-            if (catCount < minCategoryCount) {
-              minCategoryCount = catCount;
-              minOverallCount = overallCount;
-              bestGroup = group;
-            } else if (catCount === minCategoryCount) {
-              if (overallCount < minOverallCount) {
-                minOverallCount = overallCount;
-                bestGroup = group;
-              }
-            }
-          }
-          assignedGroup = bestGroup;
-
-          const cat = d.category || "Others";
-          groupCounts[assignedGroup]++;
-          categoryGroupCounts[assignedGroup][cat]++;
-
-          const updatedDel = {
-            ...d,
-            assignedGroup,
-            assignedRoom,
-          };
-          updatedDelegatesList.push(updatedDel);
-          return updatedDel;
-        }
-        return d;
-      });
-
-      // Update current delegate if their assignment changed
-      if (currentDelegate && currentDelegate.paymentStatus === "verified" && currentDelegate.assignedGroup === "None") {
-        const found = updated.find(x => x.id === currentDelegate.id);
-        if (found) {
-          setCurrentDelegate(found);
-        }
-      }
-
-      return updated;
+    const groupCounts: Record<string, number> = {};
+    const categoryGroupCounts: Record<string, Record<string, number>> = {};
+    const allHouses = [
+      "Abu Bakr", "Umar", "Uthman", "Ali",
+      "Aisha", "Khadijah", "Fatimah", "Zaynab"
+    ];
+    allHouses.forEach(h => {
+      groupCounts[h] = 0;
+      categoryGroupCounts[h] = {
+        "Secondary School": 0,
+        "Undergraduate/Leaver": 0,
+        "Others": 0
+      };
     });
 
+    delegates.forEach(x => {
+      if (x.assignedGroup && x.assignedGroup !== "None" && allHouses.includes(x.assignedGroup)) {
+        groupCounts[x.assignedGroup]++;
+        const cat = x.category || "Others";
+        if (!categoryGroupCounts[x.assignedGroup][cat]) {
+          categoryGroupCounts[x.assignedGroup][cat] = 0;
+        }
+        categoryGroupCounts[x.assignedGroup][cat]++;
+      }
+    });
+
+    const updatedDelegatesList: Delegate[] = [];
+
+    const nextDelegates = delegates.map((d) => {
+      if (d.paymentStatus === "verified" && d.assignedGroup === "None") {
+        let assignedGroup = "None";
+        let assignedRoom = "None";
+        
+        const candidates = d.gender === "Male"
+          ? ["Abu Bakr", "Umar", "Uthman", "Ali"]
+          : ["Aisha", "Khadijah", "Fatimah", "Zaynab"];
+
+        let bestGroup = candidates[0];
+        let minCategoryCount = Infinity;
+        let minOverallCount = Infinity;
+
+        for (const group of candidates) {
+          const cat = d.category || "Others";
+          const catCount = categoryGroupCounts[group][cat] || 0;
+          const overallCount = groupCounts[group] || 0;
+
+          if (catCount < minCategoryCount) {
+            minCategoryCount = catCount;
+            minOverallCount = overallCount;
+            bestGroup = group;
+          } else if (catCount === minCategoryCount) {
+            if (overallCount < minOverallCount) {
+              minOverallCount = overallCount;
+              bestGroup = group;
+            }
+          }
+        }
+        assignedGroup = bestGroup;
+
+        const cat = d.category || "Others";
+        groupCounts[assignedGroup]++;
+        categoryGroupCounts[assignedGroup][cat]++;
+
+        const updatedDel = {
+          ...d,
+          assignedGroup,
+          assignedRoom,
+        };
+        updatedDelegatesList.push(updatedDel);
+        return updatedDel;
+      }
+      return d;
+    });
+
+    if (updatedDelegatesList.length === 0) return;
+
+    setDelegates(nextDelegates);
+
+    // Update current delegate if their assignment changed
+    if (currentDelegate && currentDelegate.paymentStatus === "verified" && currentDelegate.assignedGroup === "None") {
+      const found = updatedDelegatesList.find(x => x.id === currentDelegate.id);
+      if (found) {
+        setCurrentDelegate(found);
+      }
+    }
+
     // Async write to Supabase
-    if (hasSupabase && updatedDelegatesList.length > 0) {
+    if (hasSupabase) {
       const updates = updatedDelegatesList.map((d) =>
         supabase
           .from("delegates")
@@ -1020,11 +1126,13 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const loginAsDelegate = (identifier: string) => {
+    const clean = identifier.trim().toLowerCase();
     const delegate = delegates.find(
       (d) =>
-        d.email.toLowerCase() === identifier.trim().toLowerCase() ||
-        d.reference === identifier.trim() ||
-        d.id === identifier.trim()
+        d.email.toLowerCase() === clean ||
+        d.reference.toLowerCase() === clean ||
+        d.id.toLowerCase() === clean ||
+        d.phone.trim() === identifier.trim()
     );
     if (delegate) {
       setCurrentDelegate(delegate);
@@ -1038,14 +1146,10 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateSettings = (newSettings: Partial<CampSettings>) => {
-    let finalSettings: CampSettings | null = null;
-    setSettings((prev) => {
-      const updated = { ...prev, ...newSettings };
-      finalSettings = updated;
-      return updated;
-    });
+    const updated = { ...settings, ...newSettings };
+    setSettings(updated);
 
-    if (hasSupabase && finalSettings) {
+    if (hasSupabase) {
       const updateData = {
         ...newSettings,
         ...(newSettings.campFeeUndergrad !== undefined ? { campFee: newSettings.campFeeUndergrad } : {}),
@@ -1076,6 +1180,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         announcements,
         transactions,
         registerDelegate,
+        updateDelegate,
         confirmPayment,
         overridePayment,
         assignGroup,

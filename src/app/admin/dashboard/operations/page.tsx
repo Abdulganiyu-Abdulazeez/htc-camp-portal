@@ -396,7 +396,7 @@ export default function AdminOperationsPage() {
                   </td>
                   <td className="p-4 font-bold">
                     <span className="block text-sm font-bold">{d.fullName}</span>
-                    <span className="block text-[10px] text-on-surface-variant font-medium mt-0.5">{d.email}</span>
+                    <span className="block text-[10px] text-on-surface-variant font-medium mt-0.5">{d.email.includes("@htc-temp.com") ? "No Email" : d.email}</span>
                   </td>
                   <td className="p-4">
                     <div className="flex flex-col gap-0.5 text-xs">
@@ -495,7 +495,7 @@ export default function AdminOperationsPage() {
                 <span className="text-on-surface-variant">Name:</span>
                 <span className="font-bold text-right truncate">{verifyingDelegate.fullName}</span>
                 <span className="text-on-surface-variant">Email:</span>
-                <span className="font-bold text-right truncate">{verifyingDelegate.email}</span>
+                <span className="font-bold text-right truncate">{verifyingDelegate.email.includes("@htc-temp.com") ? "No Email" : verifyingDelegate.email}</span>
                 <span className="text-on-surface-variant">Category:</span>
                 <span className="font-bold text-right">{verifyingDelegate.category}</span>
                 <span className="text-on-surface-variant">Skill of Interest:</span>

@@ -67,7 +67,7 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
     assignGroup(delegate.id, groupName, "None");
   };
 
-  const totalFee = getDelegateFee(delegate.category, delegate.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad);
+  const totalFee = getDelegateFee(delegate.category, delegate.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad, delegate.promoCode);
 
   return (
     <div className="flex flex-col gap-6 flex-1 max-w-5xl mx-auto pb-12">
@@ -101,7 +101,7 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-on-surface-variant">
               <span>{delegate.id.startsWith("pending") ? "PENDING TICKET" : delegate.id}</span>
               <span className="text-outline/50">•</span>
-              <span>{delegate.email}</span>
+              <span>{delegate.email.includes("@htc-temp.com") ? "No Email" : delegate.email}</span>
               <span className="text-outline/50">•</span>
               <span>{delegate.phone}</span>
             </div>
@@ -332,6 +332,12 @@ export default function DelegateDetailsPage({ params }: { params: Promise<{ id: 
                 <span className="text-on-surface-variant">Camp Fee Rate:</span>
                 <span className="text-primary font-bold">₦{totalFee.toLocaleString()}</span>
               </div>
+              {delegate.promoCode && (
+                <div className="flex justify-between font-semibold text-emerald-600">
+                  <span className="text-on-surface-variant">Applied Promo:</span>
+                  <span className="font-bold">{delegate.promoCode} (50% Off)</span>
+                </div>
+              )}
               <div className="flex justify-between font-semibold">
                 <span className="text-on-surface-variant">Reference ID:</span>
                 <span className="font-mono font-bold">{delegate.reference}</span>
