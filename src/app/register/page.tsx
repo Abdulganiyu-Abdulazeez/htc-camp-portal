@@ -14,6 +14,7 @@ import {
   BookOpen,
   Briefcase,
   Lock,
+  Loader2,
 } from "lucide-react";
 
 const DISTRICT_OPTIONS = [
@@ -220,6 +221,7 @@ export default function RegisterPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPaying, setIsPaying] = useState(false);
+  const [paymentLoadingMessage, setPaymentLoadingMessage] = useState("We are opening the secure Paystack checkout interface. Please complete your transaction in the popup window.");
   const [currentRef, setCurrentRef] = useState("");
   const [promoInput, setPromoInput] = useState("");
   const [promoMessage, setPromoMessage] = useState("");
@@ -527,6 +529,7 @@ export default function RegisterPage() {
       }
 
       setCurrentRef(ref);
+      setPaymentLoadingMessage("We are opening the secure Paystack checkout interface. Please complete your transaction in the popup window.");
       setIsPaying(true);
 
       // Launch real Paystack inline popup
@@ -548,12 +551,13 @@ export default function RegisterPage() {
           ],
         },
         callback: () => {
+          setPaymentLoadingMessage("Payment completed successfully! Redirecting to verification page...");
           // Paystack calls this on successful payment before redirect
           router.push(`/payment/callback?reference=${ref}`);
         },
         onClose: () => {
-          // User closed the popup without paying
-          setIsPaying(false);
+          // Keep loader active and redirect to confirm if they paid but closed
+          setPaymentLoadingMessage("Checking transaction status and redirecting to verification page...");
           router.push(`/payment/callback?reference=${ref}`);
         },
       });
@@ -562,6 +566,7 @@ export default function RegisterPage() {
         handler.openIframe();
       } else {
         // Fallback: redirect to Paystack hosted page
+        setPaymentLoadingMessage("Redirecting to secure Paystack hosted checkout page...");
         const params = new URLSearchParams({
           key: publicKey || "",
           email: emailToUse,
@@ -1267,6 +1272,25 @@ export default function RegisterPage() {
           </form>
         </>
       </div>
+
+      {isPaying && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex flex-col items-center justify-center text-white p-4">
+          <div className="bg-surface-container-lowest border border-outline-variant p-8 rounded-2xl max-w-sm w-full flex flex-col items-center gap-6 text-center shadow-2xl text-on-surface">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-bold">Secure Payment Portal</h3>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                {paymentLoadingMessage}
+              </p>
+            </div>
+            <p className="text-[10px] text-on-surface-variant animate-pulse">
+              Do not refresh or close this page.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Paystack inline SDK script */}
       <script src="https://js.paystack.co/v1/inline.js" async />

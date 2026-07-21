@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Send,
   Eye,
+  AlertCircle,
 } from "lucide-react";
 
 const GENDER_FILTER_OPTIONS = [
@@ -242,16 +243,25 @@ export default function AdminOperationsPage() {
     }, 1500);
   };
 
-  // Paystack verification simulator
-  const handleLookupReference = () => {
+  // Real Paystack verification lookup
+  const handleLookupReference = async () => {
     if (!paystackLookupRef.trim()) return;
     setIsVerifyingRef(true);
     setPaystackFound(null);
-    setTimeout(() => {
+    try {
+      const res = await fetch(`/api/paystack/verify?reference=${encodeURIComponent(paystackLookupRef.trim())}`);
+      const data = await res.json();
+      if (data.status && data.data?.paymentStatus === "success") {
+        setPaystackFound(true);
+      } else {
+        setPaystackFound(false);
+      }
+    } catch (e) {
+      console.error("Error looking up reference:", e);
+      setPaystackFound(false);
+    } finally {
       setIsVerifyingRef(false);
-      // Simulate that reference is valid
-      setPaystackFound(true);
-    }, 1200);
+    }
   };
 
   const handleManualOverride = (reference: string) => {
@@ -489,87 +499,97 @@ export default function AdminOperationsPage() {
               Transaction Verification Center
             </h3>
 
-            <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant">
-              <p className="text-xs font-semibold">Delegate Details</p>
-              <div className="grid grid-cols-2 gap-1 text-[11px] mt-2 leading-relaxed">
-                <span className="text-on-surface-variant">Name:</span>
-                <span className="font-bold text-right truncate">{verifyingDelegate.fullName}</span>
-                <span className="text-on-surface-variant">Email:</span>
-                <span className="font-bold text-right truncate">{verifyingDelegate.email.includes("@htc-temp.com") ? "No Email" : verifyingDelegate.email}</span>
-                <span className="text-on-surface-variant">Category:</span>
-                <span className="font-bold text-right">{verifyingDelegate.category}</span>
-                <span className="text-on-surface-variant">Skill of Interest:</span>
-                <span className="font-bold text-right truncate">{verifyingDelegate.skillOfInterest || "N/A"}</span>
-                {verifyingDelegate.category === "Secondary School" && (
-                  <>
-                    <span className="text-on-surface-variant">School:</span>
-                    <span className="font-bold text-right truncate">{verifyingDelegate.school}</span>
-                    <span className="text-on-surface-variant">Class:</span>
-                    <span className="font-bold text-right">{verifyingDelegate.secondaryClass}</span>
-                  </>
-                )}
-                {verifyingDelegate.category === "Undergraduate/Leaver" && (
-                  <>
-                    <span className="text-on-surface-variant">Uni:</span>
-                    <span className="font-bold text-right truncate">{verifyingDelegate.school}</span>
-                    <span className="text-on-surface-variant">Course:</span>
-                    <span className="font-bold text-right truncate">{verifyingDelegate.courseOfStudy}</span>
-                  </>
-                )}
-                {verifyingDelegate.category === "Others" && (
-                  <>
-                    <span className="text-on-surface-variant">Company:</span>
-                    <span className="font-bold text-right truncate">{verifyingDelegate.school}</span>
-                    <span className="text-on-surface-variant">Job:</span>
-                    <span className="font-bold text-right truncate">{verifyingDelegate.jobTitle}</span>
-                  </>
-                )}
-                <span className="text-on-surface-variant">Blood Group:</span>
-                <span className="font-bold text-right">{verifyingDelegate.bloodGroup || "N/A"}</span>
-                <span className="text-on-surface-variant">Genotype:</span>
-                <span className="font-bold text-right">{verifyingDelegate.genotype || "N/A"}</span>
-                <span className="text-on-surface-variant">Medical Summary:</span>
-                <span className="font-bold text-right truncate text-error-red">{verifyingDelegate.medicalCondition}</span>
-                <span className="text-on-surface-variant">Ref ID:</span>
-                <span className="font-mono text-right font-semibold">{verifyingDelegate.reference}</span>
-                <span className="text-on-surface-variant">Status:</span>
-                <span className="text-error font-bold text-right">Payment Pending</span>
-              </div>
-            </div>
-
-            {/* Paystack reference search widget */}
-            <div className="flex flex-col gap-3 p-4 border border-outline-variant rounded-xl bg-surface-container-low">
-              <h4 className="text-xs font-bold">Paystack Lookup Integration Widget</h4>
-              <p className="text-[10px] text-on-surface-variant leading-relaxed">
-                Retrieve live processor statuses matching reference ID.
-              </p>
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Paste reference REF-XXXX"
-                  value={paystackLookupRef}
-                  onChange={(e) => {
-                    setPaystackLookupRef(e.target.value);
-                    setPaystackFound(null);
-                  }}
-                  className="flex-1 px-3 py-2 bg-surface-container rounded-lg border border-outline-variant text-xs focus:outline-none"
-                />
-                <button
-                  onClick={handleLookupReference}
-                  disabled={isVerifyingRef}
-                  className="px-3 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/95 transition-colors disabled:opacity-50"
-                >
-                  {isVerifyingRef ? "Searching..." : "Lookup"}
-                </button>
-              </div>
-
-              {paystackFound === true && (
-                <div className="p-2 bg-success/15 border border-success/20 text-success rounded text-[11px] font-semibold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-success" />
-                  Processor confirmed payment successfully!
+            {/* Scrollable body wrapper */}
+            <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-6">
+              <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant">
+                <p className="text-xs font-semibold">Delegate Details</p>
+                <div className="grid grid-cols-2 gap-1 text-[11px] mt-2 leading-relaxed">
+                  <span className="text-on-surface-variant">Name:</span>
+                  <span className="font-bold text-right truncate">{verifyingDelegate.fullName}</span>
+                  <span className="text-on-surface-variant">Email:</span>
+                  <span className="font-bold text-right truncate">{verifyingDelegate.email.includes("@htc-temp.com") ? "No Email" : verifyingDelegate.email}</span>
+                  <span className="text-on-surface-variant">Category:</span>
+                  <span className="font-bold text-right">{verifyingDelegate.category}</span>
+                  <span className="text-on-surface-variant">Skill of Interest:</span>
+                  <span className="font-bold text-right truncate">{verifyingDelegate.skillOfInterest || "N/A"}</span>
+                  {verifyingDelegate.category === "Secondary School" && (
+                    <>
+                      <span className="text-on-surface-variant">School:</span>
+                      <span className="font-bold text-right truncate">{verifyingDelegate.school}</span>
+                      <span className="text-on-surface-variant">Class:</span>
+                      <span className="font-bold text-right">{verifyingDelegate.secondaryClass}</span>
+                    </>
+                  )}
+                  {verifyingDelegate.category === "Undergraduate/Leaver" && (
+                    <>
+                      <span className="text-on-surface-variant">Uni:</span>
+                      <span className="font-bold text-right truncate">{verifyingDelegate.school}</span>
+                      <span className="text-on-surface-variant">Course:</span>
+                      <span className="font-bold text-right truncate">{verifyingDelegate.courseOfStudy}</span>
+                    </>
+                  )}
+                  {verifyingDelegate.category === "Others" && (
+                    <>
+                      <span className="text-on-surface-variant">Company:</span>
+                      <span className="font-bold text-right truncate">{verifyingDelegate.school}</span>
+                      <span className="text-on-surface-variant">Job:</span>
+                      <span className="font-bold text-right truncate">{verifyingDelegate.jobTitle}</span>
+                    </>
+                  )}
+                  <span className="text-on-surface-variant">Blood Group:</span>
+                  <span className="font-bold text-right">{verifyingDelegate.bloodGroup || "N/A"}</span>
+                  <span className="text-on-surface-variant">Genotype:</span>
+                  <span className="font-bold text-right">{verifyingDelegate.genotype || "N/A"}</span>
+                  <span className="text-on-surface-variant">Medical Summary:</span>
+                  <span className="font-bold text-right truncate text-error-red">{verifyingDelegate.medicalCondition}</span>
+                  <span className="text-on-surface-variant">Ref ID:</span>
+                  <span className="font-mono text-right font-semibold">{verifyingDelegate.reference}</span>
+                  <span className="text-on-surface-variant">Status:</span>
+                  <span className="text-error font-bold text-right">Payment Pending</span>
                 </div>
-              )}
+              </div>
+
+              {/* Paystack reference search widget */}
+              <div className="flex flex-col gap-3 p-4 border border-outline-variant rounded-xl bg-surface-container-low">
+                <h4 className="text-xs font-bold">Paystack Lookup Integration Widget</h4>
+                <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                  Retrieve live processor statuses matching reference ID.
+                </p>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Paste reference REF-XXXX"
+                    value={paystackLookupRef}
+                    onChange={(e) => {
+                      setPaystackLookupRef(e.target.value);
+                      setPaystackFound(null);
+                    }}
+                    className="flex-1 px-3 py-2 bg-surface-container rounded-lg border border-outline-variant text-xs focus:outline-none"
+                  />
+                  <button
+                    onClick={handleLookupReference}
+                    disabled={isVerifyingRef}
+                    className="px-3 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/95 transition-colors disabled:opacity-50"
+                  >
+                    {isVerifyingRef ? "Searching..." : "Lookup"}
+                  </button>
+                </div>
+
+                {paystackFound === true && (
+                  <div className="p-2 bg-success/15 border border-success/20 text-success rounded text-[11px] font-semibold flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-success" />
+                    Processor confirmed payment successfully!
+                  </div>
+                )}
+
+                {paystackFound === false && (
+                  <div className="p-2 bg-error/15 border border-error/20 text-error rounded text-[11px] font-semibold flex items-center gap-1.5 animate-fade-in">
+                    <AlertCircle className="w-4 h-4 text-error shrink-0" />
+                    No successful transaction found on processor!
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Actions */}
