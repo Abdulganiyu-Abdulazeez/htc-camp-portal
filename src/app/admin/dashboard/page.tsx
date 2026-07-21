@@ -14,7 +14,7 @@ export default function AdminDashboardPage() {
   const totalPending = totalRegistrations - totalVerified;
   const totalFinancials = delegates
     .filter((d) => d.paymentStatus === "verified")
-    .reduce((sum, d) => sum + getDelegateFee(d.category, d.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad), 0);
+    .reduce((sum, d) => sum + getDelegateFee(d.category, d.yearOfStudy, settings.campFeeSecondary, settings.campFeeUndergrad, d.promoCode), 0);
   const totalUngrouped = delegates.filter(
     (d) => d.paymentStatus === "verified" && d.assignedGroup === "None"
   ).length;
